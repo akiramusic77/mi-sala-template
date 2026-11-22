@@ -2187,7 +2187,7 @@ function renderLogin(msg) {
   h(`<main><div class="login-wrap">
   <div class="logo-mark"><svg width="34" height="34" viewBox="0 0 64 64" fill="none"><path d="M23 45V21.5L32 32l9-10.5V45" stroke="#fff" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
   <h1>Mi Sala</h1>
-  <div class="sub">Tus tareas, apuntes, estudios e idiomas.<br>Solo para ti.</div>
+  <div class="sub">El corazón de tu organización.</div>
   <div class="login-card">
     <label>Email</label><input id="li-email" type="email" autocomplete="email" placeholder="tu@gmail.com">
     <label>Contraseña</label><input id="li-pass" type="password" autocomplete="current-password" placeholder="••••••••">
