@@ -1752,6 +1752,14 @@ function vCuenta() {
   <div class="grow"><h1 class="small-h">Configuración</h1><div class="sub">${esc(email)}</div></div></header>
 
   <div class="sec rise" style="animation-delay:.02s"><h2>Tu Sala</h2></div>
+  <div class="card rise" style="animation-delay:.03s" id="uso-instinct-card">
+    <div class="row"><b class="grow">Uso de Instinct hoy</b><span class="mut small">Sin datos todavía</span></div>
+    <div class="mut small" style="margin-top:6px">Cuando tu asistente apunte el primer dato, aquí verás la barra de 0 a 100.</div>
+  </div>
+  <div class="card rise" style="animation-delay:.035s" id="espacio-card">
+    <div class="row"><b class="grow">Espacio y límites (plan gratis)</b><span class="mut small">Sin datos todavía</span></div>
+    <div class="mut small" style="margin-top:6px">Cuando tu asistente mida el espacio, aparecerá aquí con su fecha.</div>
+  </div>
   <div class="card rise" style="animation-delay:.04s">
     <div class="lab" style="margin-bottom:8px">Nombre visible</div>
     <div style="display:flex;gap:8px">
@@ -1858,8 +1866,40 @@ async function enablePush(msgEl) {
   }
 }
 
+/* Tarjetas de Configuracion con datos que escribe el asistente en sala_settings
+   (instinct_uso: {"pct","updated_at"}; sei_espacio: {"app_mb","storage_mb","db_mb","updated_at"}).
+   Sin dato, la tarjeta muestra un vacio honesto. */
+async function loadSalaStatCards() {
+  try {
+    const { data: usoRow } = await sb.from('sala_settings').select('value').eq('key','instinct_uso').maybeSingle();
+    const uso = usoRow && usoRow.value ? JSON.parse(usoRow.value) : null;
+    const el = document.getElementById('uso-instinct-card');
+    if (uso && typeof uso.pct === 'number' && el) {
+      el.innerHTML = `<div class="row"><b class="grow">Uso de Instinct hoy</b><b style="font-size:18px">${uso.pct}<small class="mut" style="font-size:12px;font-weight:600">/100</small></b></div>
+      <div class="bar" style="margin-top:8px"><i style="width:${Math.max(0, Math.min(100, uso.pct))}%"></i></div>
+      <div class="mut small" style="margin-top:6px">actualizado a las ${new Date(uso.updated_at).toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'})}</div>`;
+    }
+  } catch(e) {}
+  try {
+    const { data: espRow } = await sb.from('sala_settings').select('value').eq('key','sei_espacio').maybeSingle();
+    const esp = espRow && espRow.value ? JSON.parse(espRow.value) : null;
+    const el2 = document.getElementById('espacio-card');
+    if (esp && typeof esp.storage_mb === 'number' && el2) {
+      el2.innerHTML = `<div class="row"><b class="grow">Espacio y límites (plan gratis)</b></div>
+      <div class="row" style="margin-top:10px"><span class="grow">App (web)</span><b>${esp.app_mb} MB</b></div>
+      <div class="mut small" style="margin-top:2px">El plan gratis no limita el peso total (máx. 25 MB por archivo).</div>
+      <div class="row" style="margin-top:12px"><span class="grow">Archivos</span><b>${esp.storage_mb}<small class="mut" style="font-size:12px;font-weight:600"> / 1024 MB</small></b></div>
+      <div class="bar" style="margin-top:8px"><i style="width:${Math.max(0, Math.min(100, esp.storage_mb / 1024 * 100))}%"></i></div>
+      <div class="mut small" style="margin-top:2px">${(esp.storage_mb / 1024 * 100).toFixed(1)}% usado</div>
+      <div class="row" style="margin-top:12px"><span class="grow">Base de datos</span><span class="mut small">${typeof esp.db_mb === 'number' ? esp.db_mb + ' MB / 500 MB' : 'sin dato · límite 500 MB'}</span></div>
+      <div class="mut small" style="margin-top:10px">Medido por tu asistente: ${new Date(esp.updated_at).toLocaleDateString('es-ES',{day:'numeric',month:'short'})}, ${new Date(esp.updated_at).toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'})}</div>`;
+    }
+  } catch(e) {}
+}
+
 function openCuenta() {
   h(shell(vCuenta())); bindNav();
+  loadSalaStatCards();
   app.querySelector('[data-back]').onclick = () => { tab='hoy'; render(); };
   const cfgName = document.getElementById('cfg-name');
   document.getElementById('cfg-name-save').onclick = () => {

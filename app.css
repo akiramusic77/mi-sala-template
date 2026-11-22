@@ -1014,3 +1014,14 @@ body::before{background:radial-gradient(1200px 700px at 70% -10%,#1b2b5e 0%,rgba
 
 /* ---- Aviso offline quepa en móvil (texto en varias líneas si hace falta) ---- */
 #offline-bar{max-width:calc(100vw - 24px);white-space:normal;text-align:center;line-height:1.35}
+
+/* ---- v75 (22-nov-2026): sin scroll horizontal; los chips pasan a varias filas si no caben ---- */
+.chips{flex-wrap:wrap}
+.chips .chip{flex:1 1 auto;min-width:64px}
+main{overflow-x:hidden}
+body{overflow-x:hidden}
+@media (max-width:959.5px){
+  #fd-filters.chips,#fd-kinds.chips{flex-wrap:wrap;overflow-x:visible}
+  #fd-filters .chip,#fd-kinds .chip{flex:1 1 auto;white-space:normal}
+}
+/* FIN v75 */

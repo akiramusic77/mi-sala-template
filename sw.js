@@ -6,7 +6,7 @@ const DATA = 'sala-data-v2';
 /* Mantener estas versiones en sincronía con index.html al desplegar. */
 const SHELL_URLS = [
   './', 'index.html',
-  'app.css?v=74', 'app.js?v=1246', 'config.js?v=25', 'kana-strokes.js?v=120',
+  'app.css?v=75', 'app.js?v=1247', 'config.js?v=25', 'kana-strokes.js?v=120',
   'jp-content.js', 'japanese.js?v=2', 'music.js?v=5', 'comida.js?v=5', 'deporte.js?v=5', 'dinero.js?v=5',
   'logo.svg',
   'icon-192.png?v=3', 'icon-512.png?v=3', 'icon-maskable-512.png?v=3', 'apple-touch-icon.png?v=3',
