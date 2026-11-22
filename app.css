@@ -1011,3 +1011,6 @@ body::before{background:radial-gradient(1200px 700px at 70% -10%,#1b2b5e 0%,rgba
 .tabbar button{padding:9px 2px;gap:0;justify-content:center}
 .tabbar .tab-lab{display:none}
 @media (min-width:960px){.tabbar button{gap:12px}.tabbar .tab-lab{display:inline}}
+
+/* ---- Aviso offline quepa en móvil (texto en varias líneas si hace falta) ---- */
+#offline-bar{max-width:calc(100vw - 24px);white-space:normal;text-align:center;line-height:1.35}

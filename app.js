@@ -2046,7 +2046,7 @@ function bindActions() {
   const dlb = document.getElementById('btn-offline');
   if (dlb) { dlb.disabled = !navigator.onLine; dlb.onclick = () => prefetchOffline(dlb); }
   const out = document.getElementById('btn-out');
-  if (out) out.onclick = async () => { await sb.auth.signOut(); };
+  if (out) out.onclick = async () => { try { localStorage.removeItem(OFFUSER_KEY); } catch(e) {} await sb.auth.signOut(); };
   const cta = document.getElementById('btn-cuenta');
   if (cta) cta.onclick = () => { tab='cuenta'; render(); };
   app.querySelectorAll('[data-cuenta]').forEach(b => b.onclick = () => { tab='cuenta'; render(); });
@@ -2201,21 +2201,118 @@ function renderLogin(msg) {
     const btn = document.getElementById('li-in');
     btn.disabled = true; btn.textContent = 'Entrando...';
     const { error } = await sb.auth.signInWithPassword({email,password});
-    if (error) { btn.disabled = false; btn.textContent = 'Entrar'; renderLogin('No cuadra: revisa email y contraseña.'); }
+    if (error) { btn.disabled = false; btn.textContent = 'Entrar'; renderLogin(isNetErr(error) ? 'Sin conexión: para entrar de nuevo necesitas internet un momento.' : 'No cuadra: revisa email y contraseña.'); }
   };
   document.getElementById('li-in').onclick = doIn;
   document.getElementById('li-pass').onkeydown = e => { if(e.key==='Enter') doIn(); };
   document.getElementById('li-email').onkeydown = e => { if(e.key==='Enter') document.getElementById('li-pass').focus(); };
 }
 
+/* ---------- Sesión persistente sin conexión (22-nov-2026):
+   abrir la Sala sin internet con la última sesión y los datos cacheados (los sirve
+   el service worker), sin pedir login a la fuerza. Los cambios hechos offline se
+   encolan en localStorage y se suben solos al volver la red. ---------- */
+const OFFUSER_KEY = 'sala_offline_user';
+const OUTBOX_KEY = 'sala_outbox';
+function saveOfflineUser(s) { try { if (s && s.user && !s._offline) localStorage.setItem(OFFUSER_KEY, JSON.stringify({ id: s.user.id, email: s.user.email, at: Date.now() })); } catch(e) {} }
+function loadOfflineUser() { try { return JSON.parse(localStorage.getItem(OFFUSER_KEY) || 'null'); } catch(e) { return null; } }
+function outboxList() { try { return JSON.parse(localStorage.getItem(OUTBOX_KEY) || '[]'); } catch(e) { return []; } }
+function saveOutbox(l) { try { localStorage.setItem(OUTBOX_KEY, JSON.stringify(l)); } catch(e) {} updateOfflineBar(); }
+function isNetErr(e) { const m = String((e && (e.message || e.error_description)) || e || ''); return !navigator.onLine || /failed to fetch|network|fetch failed|load failed|ERR_INTERNET|ERR_NETWORK/i.test(m); }
+
+let sbRawFrom = null; /* acceso sin envolver, para reintentar la cola sin re-encolar */
+function installOfflineWrites() {
+  sbRawFrom = sb.from.bind(sb);
+  sb.from = (table) => new Proxy(sbRawFrom(table), {
+    get(t, prop) {
+      if (['insert','update','upsert','delete'].includes(prop)) {
+        return (...args) => wrapWriteBuilder(t[prop](...args), { table, op: prop, args, chain: [] });
+      }
+      const v = t[prop];
+      return typeof v === 'function' ? v.bind(t) : v;
+    }
+  });
+}
+function wrapWriteBuilder(b, rec) {
+  return new Proxy(b, {
+    get(t, prop) {
+      if (prop === 'then') {
+        return (res, rej) => Promise.resolve(t.then(r => r, e => e)).then(r => {
+          if (r && r.error && isNetErr(r.error)) { queueWrite(rec); const o = { data: null, error: null, _queued: true }; return res ? res(o) : o; }
+          return res ? res(r) : r;
+        }, e => {
+          if (isNetErr(e)) { queueWrite(rec); const o = { data: null, error: null, _queued: true }; return res ? res(o) : o; }
+          if (rej) return rej(e); throw e;
+        });
+      }
+      const v = t[prop];
+      if (typeof v === 'function') {
+        return (...a) => {
+          const out = v.apply(t, a);
+          if (out && typeof out === 'object' && typeof out.then === 'function') {
+            rec.chain.push({ m: String(prop), args: a });
+            return wrapWriteBuilder(out, rec);
+          }
+          return out;
+        };
+      }
+      return v;
+    }
+  });
+}
+function queueWrite(rec) {
+  const l = outboxList(); l.push({ table: rec.table, op: rec.op, args: rec.args, chain: rec.chain, at: Date.now() });
+  saveOutbox(l);
+}
+async function flushOutbox() {
+  const l = outboxList();
+  if (!l.length || !navigator.onLine || !session || session._offline || !sbRawFrom) return 0;
+  const left = [];
+  let sent = 0;
+  for (const w of l) {
+    try {
+      let q = sbRawFrom(w.table)[w.op](...w.args);
+      (w.chain || []).forEach(c => { if (q && typeof q[c.m] === 'function') q = q[c.m](...c.args); });
+      const r = await q;
+      if (r && r.error) { left.push(w); if (isNetErr(r.error)) break; }
+      else sent++;
+    } catch(e) { left.push(w); if (isNetErr(e)) break; }
+  }
+  saveOutbox(left);
+  return sent;
+}
+function updateOfflineBar() {
+  const bar = document.getElementById('offline-bar');
+  const n = outboxList().length;
+  if (bar) {
+    const base = 'Sin conexión · estás viendo tus últimos datos guardados';
+    bar.textContent = n ? base + ' · ' + n + (n === 1 ? ' cambio se subirá' : ' cambios se subirán') + ' al volver la red' : base;
+  }
+  document.body.classList.toggle('offline', !navigator.onLine || n > 0);
+}
+function enterOfflineSession() {
+  const u = loadOfflineUser();
+  if (!u) { renderLogin(); return; }
+  session = { user: { id: u.id, email: u.email }, _offline: true };
+  (async () => { try { await loadAll(); } catch(e) {} tab = 'hoy'; render(); updateOfflineBar(); })();
+}
+
 /* Estado de conexion: aviso claro sin conexion, boton Actualizar desactivado y resincronizacion al volver la red. */
 const syncOnline = () => {
-  document.body.classList.toggle('offline', !navigator.onLine);
+  updateOfflineBar();
   const r = document.getElementById('btn-refresh'); if (r) r.disabled = !navigator.onLine;
   const d = document.getElementById('btn-offline'); if (d) d.disabled = !navigator.onLine;
 };
 window.addEventListener('offline', syncOnline);
-window.addEventListener('online', async () => { syncOnline(); if (session) { try { await loadAll(); render(); } catch(e) {} } });
+window.addEventListener('online', async () => {
+  syncOnline();
+  if (session && session._offline) {
+    try { const { data } = await sb.auth.refreshSession(); if (data && data.session) session = data.session; } catch(e) {}
+    if (session && session._offline) { session = null; renderLogin('Ya hay conexión: entra de nuevo para sincronizar.'); return; }
+  }
+  try { await flushOutbox(); } catch(e) {}
+  if (session) { try { await loadAll(); render(); } catch(e) {} }
+});
 
 async function boot() {
   if (!CFG.SUPABASE_URL || !CFG.SUPABASE_ANON_KEY) {
@@ -2225,13 +2322,16 @@ async function boot() {
   }
   h(`<main><div class="login-wrap"><div class="logo-mark"><svg width="34" height="34" viewBox="0 0 64 64" fill="none"><path d="M23 45V21.5L32 32l9-10.5V45" stroke="#fff" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div><h1>Mi Sala</h1><div class="sub center">Cargando...</div></div></main>`);
   sb = createClient(CFG.SUPABASE_URL, CFG.SUPABASE_ANON_KEY);
+  installOfflineWrites();
   sb.auth.onAuthStateChange(async (_e, s) => {
     session = s;
-    if (session) { await loadAll(); const sr = loadSavedRun(); if (sr) { if (!trun) restoreRun(sr); } else { tab='hoy'; render(); } }
-    else { trun = null; clearInterval(runTimer); runTimer = null; renderLogin(); }
+    if (session) { saveOfflineUser(session); await loadAll(); const sr = loadSavedRun(); if (sr) { if (!trun) restoreRun(sr); } else { tab='hoy'; render(); } }
+    else { trun = null; clearInterval(runTimer); runTimer = null; if (!navigator.onLine && loadOfflineUser()) enterOfflineSession(); else renderLogin(); }
   });
-  const { data } = await sb.auth.getSession();
-  if (!data.session) renderLogin();
+  let sess = null;
+  try { const { data } = await sb.auth.getSession(); sess = data && data.session; } catch(e) {}
+  if (!sess && !navigator.onLine && loadOfflineUser()) { enterOfflineSession(); return; }
+  if (!sess) renderLogin();
 }
 
 /* ---------- Buscador MiSala (Cmd/Ctrl+K): filtra datos ya cargados en el cliente ---------- */
