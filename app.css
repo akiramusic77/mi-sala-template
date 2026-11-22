@@ -1,0 +1,1013 @@
+/* iOS standalone (app instalada): anclar #app al viewport real.
+   En standalone, height:100% de html/body y 100vh/100lvh de #app pueden
+   discrepar (el body queda mas corto que la pantalla y su overflow:hidden
+   recortaba la barra inferior; el hueco oscuro era el fondo del canvas).
+   position:fixed;inset:0 dimensiona #app contra el viewport de verdad:
+   la barra queda pegada al borde inferior y el padding
+   env(safe-area-inset-bottom) la aparta del indicador home.
+   .ios-standalone cubre los iOS sin soporte de @media (display-mode)
+   (la clase la pone un script inline via navigator.standalone).
+   OJO: apple-mobile-web-app-status-bar-style:black-translucent esta
+   DESCARTADO (bug WebKit 313800, iOS 26): iOS dimensiona el viewport
+   como pantalla-menos-barra-de-estado y deja una franja muerta abajo
+   que ningun CSS puede alcanzar. Por eso el meta usa 'black'. */
+@media (display-mode: standalone) {
+  #app{position:fixed;inset:0;height:auto;min-height:0}
+}
+.ios-standalone #app{position:fixed;inset:0;height:auto;min-height:0}
+/* ===== Mi Sala — diseño móvil ===== */
+:root{
+  --bg:#0c0e13;
+  --surface:#14171f;
+  --surface2:#1b1f2a;
+  --line:rgba(255,255,255,.07);
+  --txt:#eef0f6;
+  --mut:#949db1;
+  --acc:#7c87f8;
+  --acc-soft:rgba(124,135,248,.14);
+  --ok:#34d399;
+  --ok-soft:rgba(52,211,153,.13);
+  --warn:#fbbf24;
+  --warn-soft:rgba(251,191,36,.13);
+  --danger:#f87171;
+  --danger-soft:rgba(248,113,113,.12);
+  --straw:#e6c15c;
+  --rad:18px;
+  --rad-s:12px;
+  --font:'Inter',-apple-system,system-ui,'Segoe UI',Roboto,sans-serif;
+  --ease:cubic-bezier(.22,.8,.32,1);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;overflow:hidden;overscroll-behavior:none}
+body{
+  background:var(--bg);color:var(--txt);
+  font-family:var(--font);font-size:16px;line-height:1.5;
+  -webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;
+}
+/* --- fondo One Piece: ilustracion barcos + velo --- */
+body.theme-onepiece::before{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;
+  background:url('fondo-barcos.jpg') center top/cover no-repeat}
+body.theme-onepiece::after{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;
+  background:linear-gradient(180deg, rgba(12,14,19,.10) 0%, rgba(12,14,19,.18) 30%, rgba(12,14,19,.42) 45%, rgba(12,14,19,.80) 68%, rgba(12,14,19,.92) 100%)}
+#app{position:relative;z-index:1;max-width:480px;margin:0 auto;height:100vh;height:100dvh;display:flex;flex-direction:column}
+.ship-space{height:clamp(150px,26vh,235px);flex:none}
+main{flex:1;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;padding:calc(8px + env(safe-area-inset-top,0px)) 20px 16px}
+
+/* --- cabecera --- */
+header.top{padding:22px 0 6px;display:flex;align-items:center;gap:12px}
+header.top .grow{flex:1;min-width:0}
+.date-cap{font-size:13px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--acc)}
+h1{font-size:28px;font-weight:800;letter-spacing:-.02em;margin-top:2px}
+h1.small-h{font-size:22px}
+.sub{color:var(--mut);font-size:14px;margin-top:4px}
+.icon-btn{width:38px;height:38px;border-radius:12px;background:var(--surface);border:1px solid var(--line);color:var(--mut);display:flex;align-items:center;justify-content:center;flex:none;transition:color .15s,background .15s}
+.icon-btn:active{transform:scale(.94)}
+
+/* --- secciones --- */
+.sec{display:flex;align-items:center;justify-content:space-between;margin:26px 0 10px}
+.sec h2{font-size:17px;font-weight:700;letter-spacing:-.01em;display:flex;align-items:center;gap:8px}
+.sec .link{background:none;border:0;color:var(--acc);font-size:13px;font-weight:600;padding:4px 0}
+.count{font-size:12px;font-weight:600;color:var(--mut);background:var(--surface2);border-radius:999px;padding:2px 9px}
+
+/* --- tarjetas --- */
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--rad);padding:16px;margin-bottom:10px}
+.card.clickable{cursor:pointer;transition:transform .18s var(--ease),background .18s}
+.card.clickable:active{transform:scale(.985);background:var(--surface2)}
+
+/* --- animación de entrada --- */
+.rise{animation:rise .5s var(--ease) both}
+@keyframes rise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){.rise{animation:none}}
+
+/* --- hero idiomas --- */
+.hero{position:relative;overflow:hidden;border-radius:22px;padding:20px;color:#fff;cursor:pointer;
+  background:linear-gradient(135deg,#5b6cf0 0%,#8b5cf6 100%);
+  transition:transform .18s var(--ease)}
+.hero:active{transform:scale(.985)}
+.hero .glyph{position:absolute;right:-8px;bottom:-26px;font-size:120px;font-weight:700;opacity:.16;line-height:1;user-select:none;pointer-events:none;font-family:'Hiragino Sans','Yu Gothic',sans-serif}
+.hero .kicker{font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;opacity:.85}
+.hero h3{font-size:19px;font-weight:700;margin:6px 24px 4px 0;letter-spacing:-.01em}
+.hero .meta{display:flex;align-items:center;gap:6px;font-size:13px;opacity:.9}
+.hero .meta svg{flex:none}
+.hero .go{position:absolute;top:16px;right:16px;width:30px;height:30px;border-radius:50%;background:rgba(255,255,255,.18);display:flex;align-items:center;justify-content:center}
+.hero.done{background:linear-gradient(135deg,#0e9f6e,#10b981)}
+
+/* --- tiles de stats --- */
+.tiles{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:4px}
+.tile{background:var(--surface);border:1px solid var(--line);border-radius:var(--rad);padding:14px 16px}
+.tile .lab{font-size:12px;font-weight:600;color:var(--mut);display:flex;align-items:center;gap:6px}
+.tile .big{font-size:26px;font-weight:800;letter-spacing:-.02em;margin-top:6px}
+.tile .big small{font-size:13px;font-weight:600;color:var(--mut);letter-spacing:0}
+.bar{height:6px;border-radius:99px;background:var(--surface2);margin-top:10px;overflow:hidden}
+.bar i{display:block;height:100%;border-radius:99px;background:var(--acc);transition:width .7s var(--ease)}
+.bar i.ok{background:var(--ok)}
+.bar i.warn{background:var(--warn)}
+
+/* --- tareas --- */
+.task{display:flex;align-items:center;gap:12px;padding:13px 16px}
+.task .txt{font-size:15px;font-weight:500}
+.task .txt.done{text-decoration:line-through;color:var(--mut)}
+.chk{width:26px;height:26px;border-radius:9px;border:2px solid #39405a;background:none;flex:none;display:flex;align-items:center;justify-content:center;color:transparent;transition:all .2s var(--ease)}
+.chk svg{width:14px;height:14px}
+.chk.done{background:var(--ok);border-color:var(--ok);color:#06281c;transform:scale(1.05)}
+.area-dot{width:8px;height:8px;border-radius:50%;display:inline-block;flex:none}
+.area-personal{background:var(--acc)}
+.area-trabajo{background:var(--warn)}
+.area-estudios{background:var(--ok)}
+
+/* --- formularios --- */
+.add-box{background:var(--surface);border:1px solid var(--line);border-radius:var(--rad);padding:14px;margin-bottom:6px}
+input,textarea,select{font:inherit;font-size:15px;width:100%;background:var(--surface2);border:1.5px solid transparent;border-radius:var(--rad-s);color:var(--txt);padding:12px 14px;margin-bottom:8px;transition:border-color .15s}
+textarea{min-height:160px;resize:vertical;line-height:1.6}
+input::placeholder,textarea::placeholder{color:#5d657a}
+input:focus,textarea:focus,select:focus{outline:none;border-color:var(--acc)}
+label{font-size:12px;font-weight:600;letter-spacing:.03em;color:var(--mut);display:block;margin:10px 0 6px;text-transform:uppercase}
+.chips{display:flex;gap:8px;margin-bottom:10px}
+.chip{flex:1;text-align:center;font-size:13px;font-weight:600;padding:9px 4px;border-radius:999px;background:var(--surface2);color:var(--mut);border:1.5px solid transparent;cursor:pointer;transition:all .15s}
+.chip.on{color:var(--txt);border-color:var(--acc);background:var(--acc-soft)}
+
+button{font:inherit;border:0;cursor:pointer}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border-radius:14px;padding:13px 18px;font-size:15px;font-weight:600;background:var(--surface2);color:var(--txt);transition:transform .15s var(--ease),opacity .15s}
+.btn:active{transform:scale(.97)}
+.btn.primary{background:var(--acc);color:#fff}
+.btn.block{width:100%}
+.btn.ghost{background:transparent;color:var(--mut);padding:8px}
+.btn.danger-ghost{background:transparent;color:var(--danger)}
+button:disabled{opacity:.45}
+
+/* --- apuntes --- */
+.note-card b{font-size:16px;font-weight:700;letter-spacing:-.01em}
+.note-card .prev{color:var(--mut);font-size:14px;margin-top:4px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.note-card .foot{display:flex;align-items:center;gap:8px;margin-top:10px;font-size:12px;color:var(--mut)}
+.tag{font-size:11px;font-weight:600;background:var(--surface2);border-radius:999px;padding:3px 9px;color:var(--mut)}
+
+/* --- pills --- */
+.pill{font-size:12px;font-weight:600;background:var(--surface2);border-radius:999px;padding:4px 11px;color:var(--mut);white-space:nowrap}
+.pill.ok{color:var(--ok);background:var(--ok-soft)}
+.pill.warn{color:var(--warn);background:var(--warn-soft)}
+.pill.acc{color:var(--acc);background:var(--acc-soft)}
+
+/* --- estudios --- */
+.mod-head{display:flex;align-items:center;justify-content:space-between;margin:22px 0 10px}
+.mod-head h2{font-size:16px;font-weight:700;display:flex;align-items:center;gap:8px}
+.link-row{display:flex;align-items:center;gap:12px;text-decoration:none;color:var(--txt)}
+.link-ic{width:40px;height:40px;border-radius:12px;background:var(--surface2);display:flex;align-items:center;justify-content:center;flex:none;color:var(--acc)}
+.link-row .grow{flex:1;min-width:0}
+.link-row b{font-size:15px;font-weight:600;display:block}
+.link-row span{font-size:13px;color:var(--mut);display:block;margin-top:1px}
+
+/* --- idiomas --- */
+.lang-badge{width:42px;height:42px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:17px;flex:none}
+.lang-badge.ja{background:var(--acc-soft);color:var(--acc);font-family:'Hiragino Sans','Yu Gothic',sans-serif}
+.lang-badge.en{background:var(--ok-soft);color:var(--ok);font-size:13px;letter-spacing:.02em}
+.lesson-row{display:flex;align-items:center;gap:13px}
+.lesson-row b{font-size:15px;font-weight:600;display:block}
+.lesson-row .meta{font-size:13px;color:var(--mut);margin-top:1px}
+
+/* --- quiz --- */
+.quiz-opt{display:block;width:100%;text-align:left;font-size:15px;font-weight:500;padding:13px 16px;border-radius:14px;background:var(--surface2);color:var(--txt);margin-bottom:8px;border:1.5px solid transparent;transition:all .15s}
+.quiz-opt.picked{border-color:var(--acc);background:var(--acc-soft)}
+.quiz-opt.right{background:var(--ok-soft);border-color:var(--ok);color:var(--ok)}
+.quiz-opt.wrong{background:var(--danger-soft);border-color:var(--danger);color:var(--danger)}
+.jp{font-size:28px;letter-spacing:2px;font-family:'Hiragino Sans','Yu Gothic',sans-serif}
+.lesson-body p{margin-bottom:12px}
+.lesson-body b{color:var(--txt)}
+
+/* --- tab bar --- */
+.tabbar{flex:none;background:#0f1118;border-top:1px solid var(--line);display:flex;justify-content:space-around;
+  padding:8px calc(6px + env(safe-area-inset-right,0px)) calc(10px + env(safe-area-inset-bottom,0px)) calc(6px + env(safe-area-inset-left,0px))}
+.tabbar button{background:none;color:var(--mut);font-size:10.5px;font-weight:600;display:flex;flex-direction:column;align-items:center;gap:4px;padding:7px 6px;border-radius:14px;min-width:0;flex:1;transition:color .15s,transform .15s var(--ease)}
+.tabbar button:active{transform:scale(.92)}
+.tabbar button.on{color:var(--acc)}
+.tabbar button.on .ic-wrap{background:var(--acc-soft);border-radius:12px}
+.tabbar .ic-wrap{width:44px;height:28px;display:flex;align-items:center;justify-content:center;border-radius:12px;transition:background .2s}
+.tabbar svg{width:21px;height:21px}
+
+/* --- login --- */
+.login-wrap{min-height:100%;display:flex;flex-direction:column;justify-content:center;padding:calc(32px + env(safe-area-inset-top,0px)) 24px calc(32px + env(safe-area-inset-bottom,0px))}
+.logo-mark{width:64px;height:64px;border-radius:20px;background:linear-gradient(135deg,#5b6cf0,#8b5cf6);display:flex;align-items:center;justify-content:center;margin:0 auto 18px;color:#fff}
+.login-wrap h1{text-align:center}
+.login-wrap .sub{text-align:center;margin-bottom:22px}
+.login-card{background:var(--surface);border:1px solid var(--line);border-radius:22px;padding:20px}
+.footnote{color:var(--mut);font-size:12.5px;text-align:center;margin-top:20px}
+
+.notice{background:var(--warn-soft);border:1px solid rgba(251,191,36,.25);color:#fcd34d;border-radius:14px;padding:12px 14px;margin-top:12px;font-size:14px}
+.empty{background:var(--surface);border:1.5px dashed rgba(255,255,255,.1);border-radius:var(--rad);padding:22px;text-align:center;color:var(--mut);font-size:14px}
+.empty svg{color:#4a5268;margin-bottom:8px}
+
+.row{display:flex;align-items:center;gap:10px}
+.grow{flex:1;min-width:0}
+.mut{color:var(--mut)}
+.small{font-size:13px}
+.center{text-align:center}
+.mt{margin-top:14px}
+.hidden{display:none!important}
+a{color:var(--acc)}
+
+/* ===== tablet ===== */
+@media (min-width:768px){
+  #app{max-width:720px}
+}
+
+/* ===== escritorio ===== */
+@media (min-width:960px){
+  #app{max-width:1180px;flex-direction:row}
+  main{flex:1;min-width:0;max-width:880px;margin:0 auto;padding:36px 28px 56px}
+  .tabbar{order:-1;width:230px;flex:none;flex-direction:column;justify-content:flex-start;align-items:stretch;gap:2px;
+    background:transparent;border-top:0;border-right:1px solid var(--line);
+    padding:32px 16px 32px 24px}
+  .tabbar::before{content:'Mi Sala';display:block;font-size:20px;font-weight:800;letter-spacing:-.02em;color:var(--txt);padding:0 14px 20px}
+  .tabbar button{flex:none;flex-direction:row;justify-content:flex-start;gap:12px;width:100%;min-width:0;font-size:14px;padding:9px 14px;border-radius:12px}
+  .tabbar button:hover{background:var(--surface2)}
+  .tabbar button:active{transform:none}
+  .tabbar button.on{background:var(--acc-soft);color:var(--acc)}
+  .tabbar button.on .ic-wrap{background:transparent}
+  .tabbar .ic-wrap{width:24px;height:24px}
+  h1{font-size:32px}
+  h1.small-h{font-size:24px}
+  .tiles{grid-template-columns:repeat(4,1fr)}
+  .card.clickable:hover{transform:none;background:var(--surface2)}
+  .icon-btn:hover{color:var(--txt);background:var(--surface2)}
+  .quiz-opt:hover{border-color:var(--acc)}
+  .link-row:hover b{color:var(--acc)}
+  .login-wrap{max-width:420px;margin:0 auto;width:100%}
+}
+
+/* redeploy: noop */
+
+/* --- tests --- */
+.qnum{font-size:12px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:var(--mut);margin-bottom:8px}
+.qtext{font-size:17px;font-weight:600;line-height:1.45;letter-spacing:-.01em}
+.qtext.small-q{font-size:15px;margin-bottom:10px}
+.opt{display:flex;gap:11px;align-items:flex-start}
+.opt-letter{flex:none;width:24px;height:24px;border-radius:8px;background:rgba(255,255,255,.06);display:flex;align-items:center;justify-content:center;font-size:12.5px;font-weight:700;color:var(--mut);margin-top:-1px}
+.quiz-opt.right .opt-letter{background:var(--ok);color:#06281c}
+.quiz-opt.wrong .opt-letter{background:var(--danger);color:#3d0a0a}
+.expl-box{margin-top:14px;margin-bottom:14px;font-size:14px;line-height:1.55;color:var(--mut);background:var(--surface2);border-radius:var(--rad-s);padding:12px 14px;border-left:3px solid var(--acc)}
+.expl-box.ok{border-left-color:var(--ok)}
+.expl-box.bad{border-left-color:var(--danger)}
+.expl-box b{color:var(--txt)}
+.hist-row{display:flex;align-items:center;gap:10px;padding:13px 16px}
+.fail-q .fail-line{font-size:14px;padding:6px 10px;border-radius:10px;margin-top:4px}
+.fail-line.bad{background:var(--danger-soft);color:var(--danger)}
+.fail-line.good{background:var(--ok-soft);color:var(--ok)}
+
+/* Agenda */
+.ag-weeknav{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.ag-chips{flex-wrap:wrap}
+.ag-chip{flex:0 1 auto;display:inline-flex;align-items:center;gap:6px}
+.ag-dot{width:9px;height:9px;border-radius:50%;display:inline-block;flex:none}
+.ag-day{margin-bottom:6px}
+.ag-dayhead{font-size:13px;font-weight:700;color:var(--mut);text-transform:capitalize;padding:8px 4px 6px}
+.ag-dayhead span{font-weight:600}
+.ag-today .ag-dayhead{color:var(--acc)}
+.ag-hoypill{background:var(--acc);color:#fff;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;padding:2px 7px;border-radius:99px;margin-left:6px}
+.ag-ev{display:flex;align-items:center;gap:10px;width:100%;text-align:left;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:11px 12px;margin-bottom:6px;color:var(--txt);cursor:pointer;transition:background .15s}
+.ag-ev:active{background:var(--surface2)}
+.ag-ev-main{flex:1;min-width:0}
+.ag-ev-main b{display:block;font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ag-ev-main small{color:var(--mut);font-size:12px}
+.ag-overlay{position:fixed;inset:0;background:rgba(8,10,14,.55);backdrop-filter:blur(4px);display:flex;align-items:flex-end;justify-content:center;z-index:60;padding:14px}
+@media(min-width:720px){.ag-overlay{align-items:center}}
+.ag-panel{width:100%;max-width:460px;margin-bottom:0;max-height:85vh;overflow:auto}
+.ag-desc{margin-top:10px;font-size:14px;color:var(--txt);white-space:pre-wrap}
+.ag-actions{display:flex;gap:8px;margin-top:16px;flex-wrap:wrap}
+.ag-times{display:flex;gap:8px}
+.ag-times .inp{flex:1}
+.ag-hidden{display:none}
+.ag-allday{display:flex;align-items:center;gap:8px;font-size:14px;color:var(--mut);margin:10px 0 2px}
+.ag-privacy{text-align:center;padding:16px 0 8px;font-size:12px}
+.ag-privacy a{color:#8b93a7;text-decoration:none}
+.ag-privacy a:hover{color:#b9bfcc;text-decoration:underline}
+
+/* Kana */
+.kz-big{font-size:88px;text-align:center;padding:22px 0 14px;line-height:1.15}
+.kz-inp{text-align:center;font-size:20px;letter-spacing:.04em;margin-top:4px}
+.kz-fb{text-align:center;padding:13px;border-radius:14px;margin-bottom:12px;font-size:16px}
+.kz-fb.ok{background:var(--ok-soft);color:var(--ok)}
+.kz-fb.no{background:var(--danger-soft);color:var(--danger)}
+.kz-failrow{display:flex;align-items:center;gap:12px;padding:8px 2px;border-bottom:1px solid var(--line)}
+.kz-failrow:last-child{border-bottom:0}
+.kz-k{font-size:26px;min-width:34px;text-align:center}
+.kz-score{font-size:44px;font-weight:700}
+.pill.no{background:var(--danger-soft);color:var(--danger)}
+
+/* --- One Piece: sombrero de paja, Log Pose, WANTED --- */
+.hat-host{position:relative}
+.hat-mini{position:absolute;top:-9px;right:-8px;transform:rotate(14deg);pointer-events:none;z-index:2}
+.hat-tile{position:absolute;top:-8px;right:-9px;transform:rotate(16deg);pointer-events:none}
+.tabbar .ic-wrap{position:relative}
+.tabbar .hat-mini{top:-8px;right:-6px}
+.hero .logpose{position:absolute;right:16px;top:50%;transform:translateY(-50%);pointer-events:none;filter:drop-shadow(0 2px 6px rgba(0,0,0,.35))}
+.sec .roseta{flex:none;opacity:.9}
+.wanted{position:relative;background:linear-gradient(160deg,#2a2416,#1d1a10);border:1.5px solid #6b5a2e;border-radius:var(--rad);padding:16px;margin-bottom:12px;overflow:hidden}
+.wanted::before{content:"";position:absolute;inset:6px;border:1px dashed rgba(230,193,92,.35);border-radius:12px;pointer-events:none}
+.wanted .w-hat{position:absolute;top:8px;left:50%;transform:translateX(-50%) rotate(-6deg);pointer-events:none}
+.wanted .w-title{text-align:center;font-family:Georgia,serif;font-size:22px;font-weight:800;letter-spacing:.28em;color:var(--straw);margin-bottom:2px}
+.wanted .w-sub{text-align:center;font-family:Georgia,serif;font-size:10px;letter-spacing:.34em;color:#b8933d;margin-bottom:10px}
+.wanted .w-score{text-align:center;font-size:40px;font-weight:800;color:var(--straw);line-height:1}
+.wanted .w-label{text-align:center;font-size:12px;color:#cbb26a;margin-top:4px}
+@media (min-width:960px){
+  body.theme-onepiece::before{background-image:url('fondo-barcos-wide.jpg');background-position:right top}
+  .tabbar{background:rgba(12,14,19,.55);backdrop-filter:blur(8px)}
+}
+
+/* V1.0.2: trazo de kana + eventos ocultos */
+.kz-canvas{width:100%;max-width:340px;aspect-ratio:1/1;display:block;margin:14px auto 0;border:1.5px dashed var(--line);border-radius:var(--rad);background:var(--surface2);touch-action:none}
+.ag-ev-off{opacity:.4}
+
+/* ===== Tema morado (tema anterior, conservado: vuelve anadiendo la clase theme-morado al <body>) ===== */
+body.theme-morado{
+  --bg:#120a24;
+  --surface:rgba(30,18,56,.68);
+  --surface2:rgba(58,36,102,.7);
+  --line:rgba(206,176,255,.16);
+  --txt:#f4eefc;
+  --mut:#b8a9d6;
+  --acc:#c4a1ff;
+  --acc-soft:rgba(196,161,255,.18);
+}
+body.theme-morado::before{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;
+  background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 800 1400' preserveAspectRatio='xMidYMin slice'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='0' y2='1'%3E%3Cstop offset='0' stop-color='%231a0b3d'/%3E%3Cstop offset='.35' stop-color='%234a1f8f'/%3E%3Cstop offset='.6' stop-color='%23a24ac0'/%3E%3Cstop offset='.78' stop-color='%23f08ac0'/%3E%3Cstop offset='1' stop-color='%23ffc2b8'/%3E%3C/linearGradient%3E%3ClinearGradient id='l' x1='0' y1='0' x2='0' y2='1'%3E%3Cstop offset='0' stop-color='%232b1456'/%3E%3Cstop offset='.5' stop-color='%231a0d36'/%3E%3Cstop offset='1' stop-color='%23120a24'/%3E%3C/linearGradient%3E%3CradialGradient id='m' cx='.5' cy='.5' r='.5'%3E%3Cstop offset='0' stop-color='%23fff4ff' stop-opacity='.95'/%3E%3Cstop offset='.35' stop-color='%23f3c6ff' stop-opacity='.45'/%3E%3Cstop offset='1' stop-color='%23c58bff' stop-opacity='0'/%3E%3C/radialGradient%3E%3C/defs%3E%3Crect width='800' height='1400' fill='url%28%23g%29'/%3E%3Ccircle cx='259' cy='106' r='0.8' fill='white' opacity='0.4'/%3E%3Ccircle cx='657' cy='66' r='0.8' fill='white' opacity='0.9'/%3E%3Ccircle cx='172' cy='60' r='1.8' fill='white' opacity='0.4'/%3E%3Ccircle cx='193' cy='386' r='0.8' fill='white' opacity='0.9'/%3E%3Ccircle cx='99' cy='156' r='0.8' fill='white' opacity='0.9'/%3E%3Ccircle cx='468' cy='35' r='1' fill='white' opacity='0.4'/%3E%3Ccircle cx='445' cy='93' r='1.8' fill='white' opacity='0.4'/%3E%3Ccircle cx='433' cy='400' r='1' fill='white' opacity='0.4'/%3E%3Ccircle cx='465' cy='447' r='1.2' fill='white' opacity='0.4'/%3E%3Ccircle cx='438' cy='44' r='0.8' fill='white' opacity='0.9'/%3E%3Ccircle cx='165' cy='476' r='1.8' fill='white' opacity='0.6'/%3E%3Ccircle cx='372' cy='646' r='1.2' fill='white' opacity='0.6'/%3E%3Ccircle cx='199' cy='126' r='1' fill='white' opacity='0.4'/%3E%3Ccircle cx='460' cy='368' r='1.2' fill='white' opacity='0.9'/%3E%3Ccircle cx='359' cy='426' r='0.8' fill='white' opacity='0.4'/%3E%3Ccircle cx='410' cy='115' r='1.2' fill='white' opacity='0.4'/%3E%3Ccircle cx='747' cy='295' r='0.8' fill='white' opacity='0.9'/%3E%3Ccircle cx='458' cy='613' r='1.2' fill='white' opacity='0.6'/%3E%3Ccircle cx='556' cy='416' r='1.8' fill='white' opacity='0.4'/%3E%3Ccircle cx='672' cy='661' r='1.8' fill='white' opacity='0.9'/%3E%3Ccircle cx='531' cy='42' r='1.2' fill='white' opacity='0.9'/%3E%3Ccircle cx='462' cy='477' r='1.8' fill='white' opacity='0.6'/%3E%3Ccircle cx='573' cy='621' r='1.2' fill='white' opacity='0.4'/%3E%3Ccircle cx='753' cy='249' r='0.8' fill='white' opacity='0.6'/%3E%3Ccircle cx='47' cy='538' r='1' fill='white' opacity='0.9'/%3E%3Ccircle cx='198' cy='274' r='1.8' fill='white' opacity='0.4'/%3E%3Ccircle cx='133' cy='281' r='1.2' fill='white' opacity='0.4'/%3E%3Ccircle cx='655' cy='605' r='1.2' fill='white' opacity='0.9'/%3E%3Ccircle cx='332' cy='251' r='1.8' fill='white' opacity='0.4'/%3E%3Ccircle cx='121' cy='123' r='1' fill='white' opacity='0.9'/%3E%3Ccircle cx='187' cy='339' r='1' fill='white' opacity='0.6'/%3E%3Ccircle cx='226' cy='102' r='1.2' fill='white' opacity='0.9'/%3E%3Ccircle cx='453' cy='667' r='0.8' fill='white' opacity='0.6'/%3E%3Ccircle cx='720' cy='546' r='1.8' fill='white' opacity='0.6'/%3E%3Ccircle cx='319' cy='72' r='1.8' fill='white' opacity='0.4'/%3E%3Ccircle cx='152' cy='689' r='1.8' fill='white' opacity='0.4'/%3E%3Ccircle cx='88' cy='421' r='0.8' fill='white' opacity='0.4'/%3E%3Ccircle cx='453' cy='376' r='1.2' fill='white' opacity='0.9'/%3E%3Ccircle cx='20' cy='612' r='1.8' fill='white' opacity='0.4'/%3E%3Ccircle cx='508' cy='669' r='1.2' fill='white' opacity='0.6'/%3E%3Ccircle cx='98' cy='594' r='1.8' fill='white' opacity='0.6'/%3E%3Ccircle cx='387' cy='60' r='0.8' fill='white' opacity='0.9'/%3E%3Ccircle cx='274' cy='185' r='1' fill='white' opacity='0.9'/%3E%3Ccircle cx='18' cy='666' r='1.2' fill='white' opacity='0.4'/%3E%3Ccircle cx='552' cy='640' r='1.2' fill='white' opacity='0.9'/%3E%3Ccircle cx='691' cy='487' r='1.2' fill='white' opacity='0.9'/%3E%3Ccircle cx='293' cy='117' r='1' fill='white' opacity='0.9'/%3E%3Ccircle cx='433' cy='352' r='1' fill='white' opacity='0.9'/%3E%3Ccircle cx='649' cy='689' r='1' fill='white' opacity='0.4'/%3E%3Ccircle cx='655' cy='518' r='1' fill='white' opacity='0.4'/%3E%3Ccircle cx='414' cy='249' r='0.8' fill='white' opacity='0.4'/%3E%3Ccircle cx='632' cy='331' r='1' fill='white' opacity='0.9'/%3E%3Ccircle cx='484' cy='241' r='1.2' fill='white' opacity='0.6'/%3E%3Ccircle cx='64' cy='72' r='1.8' fill='white' opacity='0.4'/%3E%3Ccircle cx='270' cy='338' r='0.8' fill='white' opacity='0.6'/%3E%3Ccircle cx='727' cy='241' r='0.8' fill='white' opacity='0.9'/%3E%3Ccircle cx='96' cy='272' r='1' fill='white' opacity='0.6'/%3E%3Ccircle cx='711' cy='304' r='1.2' fill='white' opacity='0.4'/%3E%3Ccircle cx='641' cy='680' r='1.8' fill='white' opacity='0.6'/%3E%3Ccircle cx='321' cy='663' r='1' fill='white' opacity='0.4'/%3E%3Ccircle cx='794' cy='19' r='1.8' fill='white' opacity='0.9'/%3E%3Ccircle cx='117' cy='579' r='1.8' fill='white' opacity='0.9'/%3E%3Ccircle cx='750' cy='109' r='1' fill='white' opacity='0.4'/%3E%3Ccircle cx='11' cy='680' r='0.8' fill='white' opacity='0.9'/%3E%3Ccircle cx='600' cy='97' r='1' fill='white' opacity='0.4'/%3E%3Ccircle cx='22' cy='149' r='1' fill='white' opacity='0.9'/%3E%3Ccircle cx='261' cy='381' r='1' fill='white' opacity='0.4'/%3E%3Ccircle cx='728' cy='248' r='1.8' fill='white' opacity='0.9'/%3E%3Ccircle cx='467' cy='633' r='1.8' fill='white' opacity='0.9'/%3E%3Ccircle cx='105' cy='106' r='0.8' fill='white' opacity='0.6'/%3E%3Ccircle cx='621' cy='426' r='1' fill='white' opacity='0.4'/%3E%3Ccircle cx='113' cy='433' r='0.8' fill='white' opacity='0.9'/%3E%3Ccircle cx='49' cy='478' r='1.8' fill='white' opacity='0.4'/%3E%3Ccircle cx='707' cy='40' r='1' fill='white' opacity='0.6'/%3E%3Ccircle cx='34' cy='68' r='1.8' fill='white' opacity='0.9'/%3E%3Ccircle cx='22' cy='626' r='0.8' fill='white' opacity='0.6'/%3E%3Ccircle cx='260' cy='681' r='1' fill='white' opacity='0.9'/%3E%3Ccircle cx='222' cy='356' r='1.8' fill='white' opacity='0.9'/%3E%3Ccircle cx='753' cy='489' r='1.2' fill='white' opacity='0.9'/%3E%3Ccircle cx='714' cy='142' r='1.8' fill='white' opacity='0.4'/%3E%3Ccircle cx='333' cy='275' r='1.2' fill='white' opacity='0.4'/%3E%3Ccircle cx='537' cy='300' r='1' fill='white' opacity='0.9'/%3E%3Ccircle cx='242' cy='86' r='1' fill='white' opacity='0.9'/%3E%3Ccircle cx='515' cy='256' r='1.2' fill='white' opacity='0.4'/%3E%3Ccircle cx='774' cy='154' r='0.8' fill='white' opacity='0.6'/%3E%3Ccircle cx='708' cy='114' r='1' fill='white' opacity='0.4'/%3E%3Ccircle cx='565' cy='696' r='1.8' fill='white' opacity='0.6'/%3E%3Ccircle cx='337' cy='250' r='0.8' fill='white' opacity='0.9'/%3E%3Ccircle cx='293' cy='237' r='1.8' fill='white' opacity='0.6'/%3E%3Ccircle cx='563' cy='269' r='1.2' fill='white' opacity='0.9'/%3E%3Ccircle cx='769' cy='79' r='1' fill='white' opacity='0.4'/%3E%3Ccircle cx='67' cy='190' r='1' fill='white' opacity='0.6'/%3E%3Ccircle cx='605' cy='574' r='1.2' fill='white' opacity='0.6'/%3E%3Ccircle cx='119' cy='643' r='1.8' fill='white' opacity='0.9'/%3E%3Ccircle cx='262' cy='195' r='1' fill='white' opacity='0.6'/%3E%3Ccircle cx='716' cy='188' r='0.8' fill='white' opacity='0.9'/%3E%3Ccircle cx='71' cy='182' r='1' fill='white' opacity='0.4'/%3E%3Ccircle cx='212' cy='85' r='0.8' fill='white' opacity='0.6'/%3E%3Ccircle cx='795' cy='292' r='1.2' fill='white' opacity='0.9'/%3E%3Ccircle cx='103' cy='369' r='1' fill='white' opacity='0.4'/%3E%3Ccircle cx='775' cy='183' r='1' fill='white' opacity='0.4'/%3E%3Ccircle cx='746' cy='440' r='1' fill='white' opacity='0.6'/%3E%3Ccircle cx='357' cy='471' r='1.2' fill='white' opacity='0.6'/%3E%3Ccircle cx='643' cy='696' r='0.8' fill='white' opacity='0.4'/%3E%3Ccircle cx='15' cy='354' r='1' fill='white' opacity='0.9'/%3E%3Ccircle cx='380' cy='654' r='0.8' fill='white' opacity='0.9'/%3E%3Ccircle cx='655' cy='303' r='1.8' fill='white' opacity='0.9'/%3E%3Ccircle cx='668' cy='275' r='1.2' fill='white' opacity='0.9'/%3E%3Ccircle cx='172' cy='161' r='1' fill='white' opacity='0.9'/%3E%3Ccircle cx='583' cy='98' r='1.2' fill='white' opacity='0.4'/%3E%3Ccircle cx='670' cy='10' r='1.2' fill='white' opacity='0.6'/%3E%3Ccircle cx='131' cy='59' r='1.8' fill='white' opacity='0.9'/%3E%3Ccircle cx='536' cy='197' r='1' fill='white' opacity='0.9'/%3E%3Ccircle cx='234' cy='322' r='1' fill='white' opacity='0.6'/%3E%3Ccircle cx='357' cy='184' r='1.2' fill='white' opacity='0.9'/%3E%3Ccircle cx='259' cy='24' r='1.2' fill='white' opacity='0.4'/%3E%3Ccircle cx='285' cy='1' r='1.8' fill='white' opacity='0.4'/%3E%3Ccircle cx='380' cy='352' r='1' fill='white' opacity='0.4'/%3E%3Ccircle cx='404' cy='3' r='1.2' fill='white' opacity='0.4'/%3E%3Ccircle cx='115' cy='411' r='1.8' fill='white' opacity='0.4'/%3E%3Ccircle cx='240' cy='441' r='0.8' fill='white' opacity='0.9'/%3E%3Ccircle cx='766' cy='597' r='1' fill='white' opacity='0.9'/%3E%3Ccircle cx='714' cy='549' r='1.8' fill='white' opacity='0.6'/%3E%3Ccircle cx='577' cy='346' r='1.2' fill='white' opacity='0.9'/%3E%3Cellipse cx='160' cy='504' rx='140' ry='17' fill='%23ffd9f5' opacity='.22'/%3E%3Cellipse cx='600' cy='616' rx='160' ry='17' fill='%23ffd9f5' opacity='.22'/%3E%3Cellipse cx='320' cy='700' rx='120' ry='17' fill='%23ffd9f5' opacity='.22'/%3E%3Cpolygon points='-96,616 200,406 240,378 280,406 640,616' fill='%23703aa8'/%3E%3Cpolygon points='200,406 240,378 280,406 256,427 240,413 220,434' fill='%23f6dcff' opacity='.85'/%3E%3Cpolygon points='0,1400 0,621 57,591 114,608 171,585 229,583 286,638 343,643 400,562 457,619 514,621 571,546 629,598 686,562 743,597 800,581 800,1400' fill='%2352257f'/%3E%3Cpolygon points='0,1400 0,642 57,634 114,630 171,620 229,634 286,621 343,684 400,653 457,620 514,641 571,623 629,678 686,653 743,669 800,648 800,1400' fill='%2335175c'/%3E%3Cpolygon points='0,1400 0,705 57,710 114,721 171,686 229,728 286,703 343,684 400,724 457,701 514,698 571,726 629,709 686,694 743,706 800,692 800,1400' fill='%231f0e3a'/%3E%3Crect y='756' width='800' height='1400' fill='url%28%23l%29'/%3E%3Crect x='484' y='770' width='88' height='42' rx='6' fill='%23f3c6ff' opacity='.25'/%3E%3Cg fill='%23120626'%3E%3Crect x='76' y='649' width='6' height='72'/%3E%3Crect x='142' y='649' width='6' height='72'/%3E%3Crect x='65' y='642' width='94' height='7'/%3E%3Crect x='72' y='663' width='79' height='4'/%3E%3C/g%3E%3Cellipse cx='362' cy='431' rx='4' ry='2.2' fill='%23ffb8dc' opacity='.7' transform='rotate%28119 362 431%29'/%3E%3Cellipse cx='361' cy='658' rx='4' ry='2.2' fill='%23ffb8dc' opacity='.7' transform='rotate%2848 361 658%29'/%3E%3Cellipse cx='148' cy='394' rx='4' ry='2.2' fill='%23ffb8dc' opacity='.7' transform='rotate%28161 148 394%29'/%3E%3Cellipse cx='491' cy='143' rx='4' ry='2.2' fill='%23ffb8dc' opacity='.7' transform='rotate%28114 491 143%29'/%3E%3Cellipse cx='243' cy='70' rx='4' ry='2.2' fill='%23ffb8dc' opacity='.7' transform='rotate%28177 243 70%29'/%3E%3Cellipse cx='508' cy='458' rx='4' ry='2.2' fill='%23ffb8dc' opacity='.7' transform='rotate%28101 508 458%29'/%3E%3Cellipse cx='772' cy='504' rx='4' ry='2.2' fill='%23ffb8dc' opacity='.7' transform='rotate%28157 772 504%29'/%3E%3Cellipse cx='520' cy='480' rx='4' ry='2.2' fill='%23ffb8dc' opacity='.7' transform='rotate%28135 520 480%29'/%3E%3Cellipse cx='51' cy='27' rx='4' ry='2.2' fill='%23ffb8dc' opacity='.7' transform='rotate%2861 51 27%29'/%3E%3Cellipse cx='480' cy='599' rx='4' ry='2.2' fill='%23ffb8dc' opacity='.7' transform='rotate%2883 480 599%29'/%3E%3Cellipse cx='352' cy='649' rx='4' ry='2.2' fill='%23ffb8dc' opacity='.7' transform='rotate%28132 352 649%29'/%3E%3Cellipse cx='187' cy='226' rx='4' ry='2.2' fill='%23ffb8dc' opacity='.7' transform='rotate%281 187 226%29'/%3E%3Cellipse cx='530' cy='352' rx='4' ry='2.2' fill='%23ffb8dc' opacity='.7' transform='rotate%2871 530 352%29'/%3E%3Cellipse cx='325' cy='424' rx='4' ry='2.2' fill='%23ffb8dc' opacity='.7' transform='rotate%2821 325 424%29'/%3E%3Cellipse cx='566' cy='243' rx='4' ry='2.2' fill='%23ffb8dc' opacity='.7' transform='rotate%2858 566 243%29'/%3E%3Cellipse cx='410' cy='23' rx='4' ry='2.2' fill='%23ffb8dc' opacity='.7' transform='rotate%28144 410 23%29'/%3E%3Cellipse cx='613' cy='308' rx='4' ry='2.2' fill='%23ffb8dc' opacity='.7' transform='rotate%2874 613 308%29'/%3E%3Cellipse cx='309' cy='738' rx='4' ry='2.2' fill='%23ffb8dc' opacity='.7' transform='rotate%28175 309 738%29'/%3E%3Cellipse cx='0' cy='161' rx='4' ry='2.2' fill='%23ffb8dc' opacity='.7' transform='rotate%2813 0 161%29'/%3E%3Cellipse cx='376' cy='755' rx='4' ry='2.2' fill='%23ffb8dc' opacity='.7' transform='rotate%28101 376 755%29'/%3E%3Cellipse cx='336' cy='436' rx='4' ry='2.2' fill='%23ffb8dc' opacity='.7' transform='rotate%2850 336 436%29'/%3E%3Cellipse cx='623' cy='208' rx='4' ry='2.2' fill='%23ffb8dc' opacity='.7' transform='rotate%2822 623 208%29'/%3E%3Cellipse cx='249' cy='12' rx='4' ry='2.2' fill='%23ffb8dc' opacity='.7' transform='rotate%28104 249 12%29'/%3E%3Cellipse cx='606' cy='91' rx='4' ry='2.2' fill='%23ffb8dc' opacity='.7' transform='rotate%2863 606 91%29'/%3E%3Cellipse cx='566' cy='8' rx='4' ry='2.2' fill='%23ffb8dc' opacity='.7' transform='rotate%28119 566 8%29'/%3E%3Cellipse cx='638' cy='137' rx='4' ry='2.2' fill='%23ffb8dc' opacity='.7' transform='rotate%28143 638 137%29'/%3E%3C/svg%3E") center top/cover no-repeat}
+body.theme-morado::after{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;
+  background:linear-gradient(180deg,rgba(18,10,36,0) 0%,rgba(18,10,36,.05) 40%,rgba(18,10,36,.55) 62%,rgba(18,10,36,.86) 80%,rgba(18,10,36,.94) 100%)}
+.card,.tile,.add-box,.login-card,.empty{-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px)}
+body.theme-morado .hero{background:linear-gradient(135deg,#7a4bff 0%,#c64bd0 100%)}
+body.theme-morado .logo-mark{background:linear-gradient(135deg,#7a4bff,#d85bc0)}
+body.theme-morado .btn.primary{background:linear-gradient(135deg,#8d5cff,#c75bd6)}
+body.theme-morado .tabbar{background:rgba(16,9,32,.82);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px)}
+body.theme-morado .chk{border-color:#6a559a}
+@media (min-width:700px){
+  body.theme-morado::before{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1600 900' preserveAspectRatio='xMidYMin slice'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='0' y2='1'%3E%3Cstop offset='0' stop-color='%231a0b3d'/%3E%3Cstop offset='.35' stop-color='%234a1f8f'/%3E%3Cstop offset='.6' stop-color='%23a24ac0'/%3E%3Cstop offset='.78' stop-color='%23f08ac0'/%3E%3Cstop offset='1' stop-color='%23ffc2b8'/%3E%3C/linearGradient%3E%3ClinearGradient id='l' x1='0' y1='0' x2='0' y2='1'%3E%3Cstop offset='0' stop-color='%232b1456'/%3E%3Cstop offset='.5' stop-color='%231a0d36'/%3E%3Cstop offset='1' stop-color='%23120a24'/%3E%3C/linearGradient%3E%3CradialGradient id='m' cx='.5' cy='.5' r='.5'%3E%3Cstop offset='0' stop-color='%23fff4ff' stop-opacity='.95'/%3E%3Cstop offset='.35' stop-color='%23f3c6ff' stop-opacity='.45'/%3E%3Cstop offset='1' stop-color='%23c58bff' stop-opacity='0'/%3E%3C/radialGradient%3E%3C/defs%3E%3Crect width='1600' height='900' fill='url%28%23g%29'/%3E%3Ccircle cx='301' cy='229' r='1' fill='white' opacity='0.6'/%3E%3Ccircle cx='1030' cy='52' r='1.8' fill='white' opacity='0.4'/%3E%3Ccircle cx='1' cy='389' r='1.2' fill='white' opacity='0.4'/%3E%3Ccircle cx='337' cy='177' r='0.8' fill='white' opacity='0.4'/%3E%3Ccircle cx='1583' cy='96' r='1.2' fill='white' opacity='0.4'/%3E%3Ccircle cx='1236' cy='148' r='1.2' fill='white' opacity='0.6'/%3E%3Ccircle cx='117' cy='41' r='1' fill='white' opacity='0.4'/%3E%3Ccircle cx='962' cy='167' r='1.8' fill='white' opacity='0.4'/%3E%3Ccircle cx='1535' cy='218' r='1' fill='white' opacity='0.6'/%3E%3Ccircle cx='293' cy='69' r='1' fill='white' opacity='0.9'/%3E%3Ccircle cx='399' cy='85' r='1' fill='white' opacity='0.9'/%3E%3Ccircle cx='1520' cy='397' r='0.8' fill='white' opacity='0.6'/%3E%3Ccircle cx='76' cy='49' r='1.2' fill='white' opacity='0.4'/%3E%3Ccircle cx='1184' cy='176' r='1.8' fill='white' opacity='0.9'/%3E%3Ccircle cx='786' cy='234' r='0.8' fill='white' opacity='0.4'/%3E%3Ccircle cx='365' cy='252' r='0.8' fill='white' opacity='0.6'/%3E%3Ccircle cx='340' cy='412' r='0.8' fill='white' opacity='0.4'/%3E%3Ccircle cx='431' cy='201' r='0.8' fill='white' opacity='0.4'/%3E%3Ccircle cx='282' cy='166' r='1' fill='white' opacity='0.4'/%3E%3Ccircle cx='579' cy='401' r='1.2' fill='white' opacity='0.9'/%3E%3Ccircle cx='1173' cy='235' r='1' fill='white' opacity='0.9'/%3E%3Ccircle cx='56' cy='8' r='1.2' fill='white' opacity='0.9'/%3E%3Ccircle cx='499' cy='15' r='0.8' fill='white' opacity='0.6'/%3E%3Ccircle cx='108' cy='140' r='1' fill='white' opacity='0.4'/%3E%3Ccircle cx='120' cy='246' r='0.8' fill='white' opacity='0.9'/%3E%3Ccircle cx='1179' cy='58' r='1.2' fill='white' opacity='0.6'/%3E%3Ccircle cx='136' cy='213' r='0.8' fill='white' opacity='0.6'/%3E%3Ccircle cx='1511' cy='14' r='1.8' fill='white' opacity='0.9'/%3E%3Ccircle cx='23' cy='298' r='1.8' fill='white' opacity='0.9'/%3E%3Ccircle cx='20' cy='33' r='0.8' fill='white' opacity='0.9'/%3E%3Ccircle cx='185' cy='116' r='1.8' fill='white' opacity='0.9'/%3E%3Ccircle cx='528' cy='420' r='1.8' fill='white' opacity='0.6'/%3E%3Ccircle cx='740' cy='244' r='0.8' fill='white' opacity='0.6'/%3E%3Ccircle cx='962' cy='216' r='1' fill='white' opacity='0.9'/%3E%3Ccircle cx='181' cy='351' r='1.8' fill='white' opacity='0.6'/%3E%3Ccircle cx='1434' cy='166' r='1' fill='white' opacity='0.9'/%3E%3Ccircle cx='979' cy='233' r='1.2' fill='white' opacity='0.9'/%3E%3Ccircle cx='1488' cy='224' r='1' fill='white' opacity='0.6'/%3E%3Ccircle cx='648' cy='113' r='1.8' fill='white' opacity='0.4'/%3E%3Ccircle cx='1408' cy='173' r='1.2' fill='white' opacity='0.4'/%3E%3Ccircle cx='218' cy='223' r='0.8' fill='white' opacity='0.9'/%3E%3Ccircle cx='103' cy='441' r='1' fill='white' opacity='0.4'/%3E%3Ccircle cx='721' cy='124' r='1' fill='white' opacity='0.6'/%3E%3Ccircle cx='612' cy='234' r='1.2' fill='white' opacity='0.9'/%3E%3Ccircle cx='1343' cy='442' r='1.8' fill='white' opacity='0.6'/%3E%3Ccircle cx='119' cy='14' r='0.8' fill='white' opacity='0.9'/%3E%3Ccircle cx='1134' cy='257' r='1.2' fill='white' opacity='0.9'/%3E%3Ccircle cx='1266' cy='9' r='1' fill='white' opacity='0.6'/%3E%3Ccircle cx='728' cy='11' r='1.2' fill='white' opacity='0.4'/%3E%3Ccircle cx='1247' cy='359' r='0.8' fill='white' opacity='0.6'/%3E%3Ccircle cx='174' cy='241' r='1.2' fill='white' opacity='0.4'/%3E%3Ccircle cx='1095' cy='90' r='1.8' fill='white' opacity='0.6'/%3E%3Ccircle cx='286' cy='5' r='1.8' fill='white' opacity='0.9'/%3E%3Ccircle cx='1143' cy='81' r='1.2' fill='white' opacity='0.6'/%3E%3Ccircle cx='864' cy='426' r='1' fill='white' opacity='0.6'/%3E%3Ccircle cx='1358' cy='315' r='1' fill='white' opacity='0.4'/%3E%3Ccircle cx='657' cy='402' r='1.8' fill='white' opacity='0.4'/%3E%3Ccircle cx='721' cy='89' r='0.8' fill='white' opacity='0.6'/%3E%3Ccircle cx='880' cy='294' r='1.2' fill='white' opacity='0.6'/%3E%3Ccircle cx='522' cy='442' r='0.8' fill='white' opacity='0.9'/%3E%3Ccircle cx='1386' cy='359' r='0.8' fill='white' opacity='0.4'/%3E%3Ccircle cx='388' cy='176' r='0.8' fill='white' opacity='0.6'/%3E%3Ccircle cx='859' cy='356' r='1.2' fill='white' opacity='0.6'/%3E%3Ccircle cx='1456' cy='385' r='1.2' fill='white' opacity='0.9'/%3E%3Ccircle cx='132' cy='198' r='1.8' fill='white' opacity='0.6'/%3E%3Ccircle cx='780' cy='13' r='0.8' fill='white' opacity='0.6'/%3E%3Ccircle cx='1280' cy='78' r='1.2' fill='white' opacity='0.9'/%3E%3Ccircle cx='1261' cy='63' r='1' fill='white' opacity='0.9'/%3E%3Ccircle cx='1441' cy='233' r='1.8' fill='white' opacity='0.6'/%3E%3Ccircle cx='926' cy='310' r='1' fill='white' opacity='0.6'/%3E%3Ccircle cx='843' cy='131' r='1' fill='white' opacity='0.9'/%3E%3Ccircle cx='823' cy='408' r='1.2' fill='white' opacity='0.6'/%3E%3Ccircle cx='1074' cy='430' r='1' fill='white' opacity='0.6'/%3E%3Ccircle cx='1361' cy='436' r='1.2' fill='white' opacity='0.9'/%3E%3Ccircle cx='796' cy='185' r='0.8' fill='white' opacity='0.9'/%3E%3Ccircle cx='8' cy='170' r='0.8' fill='white' opacity='0.9'/%3E%3Ccircle cx='1468' cy='245' r='0.8' fill='white' opacity='0.6'/%3E%3Ccircle cx='149' cy='75' r='1.8' fill='white' opacity='0.6'/%3E%3Ccircle cx='1473' cy='360' r='1.8' fill='white' opacity='0.6'/%3E%3Ccircle cx='394' cy='222' r='1.2' fill='white' opacity='0.6'/%3E%3Ccircle cx='1441' cy='421' r='1.8' fill='white' opacity='0.9'/%3E%3Ccircle cx='508' cy='86' r='0.8' fill='white' opacity='0.6'/%3E%3Ccircle cx='207' cy='351' r='0.8' fill='white' opacity='0.4'/%3E%3Ccircle cx='311' cy='102' r='1.2' fill='white' opacity='0.6'/%3E%3Ccircle cx='1158' cy='110' r='1.8' fill='white' opacity='0.4'/%3E%3Ccircle cx='799' cy='262' r='1.2' fill='white' opacity='0.9'/%3E%3Ccircle cx='316' cy='239' r='1.8' fill='white' opacity='0.4'/%3E%3Ccircle cx='601' cy='186' r='1' fill='white' opacity='0.9'/%3E%3Ccircle cx='327' cy='284' r='1' fill='white' opacity='0.9'/%3E%3Ccircle cx='346' cy='244' r='1' fill='white' opacity='0.4'/%3E%3Ccircle cx='1464' cy='283' r='1.2' fill='white' opacity='0.4'/%3E%3Ccircle cx='505' cy='142' r='1' fill='white' opacity='0.4'/%3E%3Ccircle cx='1245' cy='88' r='0.8' fill='white' opacity='0.4'/%3E%3Ccircle cx='1422' cy='60' r='0.8' fill='white' opacity='0.6'/%3E%3Ccircle cx='621' cy='196' r='1.8' fill='white' opacity='0.9'/%3E%3Ccircle cx='1264' cy='57' r='1.8' fill='white' opacity='0.9'/%3E%3Ccircle cx='1096' cy='8' r='1' fill='white' opacity='0.9'/%3E%3Ccircle cx='1092' cy='410' r='1.2' fill='white' opacity='0.4'/%3E%3Ccircle cx='1128' cy='286' r='1.2' fill='white' opacity='0.9'/%3E%3Ccircle cx='1598' cy='375' r='0.8' fill='white' opacity='0.6'/%3E%3Ccircle cx='170' cy='17' r='1.8' fill='white' opacity='0.4'/%3E%3Ccircle cx='303' cy='52' r='1' fill='white' opacity='0.4'/%3E%3Ccircle cx='1584' cy='417' r='0.8' fill='white' opacity='0.9'/%3E%3Ccircle cx='99' cy='428' r='1.8' fill='white' opacity='0.4'/%3E%3Ccircle cx='1224' cy='147' r='1.8' fill='white' opacity='0.6'/%3E%3Ccircle cx='824' cy='194' r='1.2' fill='white' opacity='0.4'/%3E%3Ccircle cx='1014' cy='18' r='1' fill='white' opacity='0.4'/%3E%3Ccircle cx='653' cy='162' r='1.2' fill='white' opacity='0.6'/%3E%3Ccircle cx='1475' cy='272' r='0.8' fill='white' opacity='0.9'/%3E%3Ccircle cx='1268' cy='146' r='0.8' fill='white' opacity='0.9'/%3E%3Ccircle cx='1401' cy='409' r='1.8' fill='white' opacity='0.9'/%3E%3Ccircle cx='959' cy='227' r='1.2' fill='white' opacity='0.6'/%3E%3Ccircle cx='447' cy='52' r='1' fill='white' opacity='0.6'/%3E%3Ccircle cx='213' cy='148' r='1.2' fill='white' opacity='0.6'/%3E%3Ccircle cx='1224' cy='183' r='1' fill='white' opacity='0.4'/%3E%3Ccircle cx='1276' cy='136' r='0.8' fill='white' opacity='0.4'/%3E%3Ccircle cx='1421' cy='446' r='0.8' fill='white' opacity='0.4'/%3E%3Ccircle cx='437' cy='433' r='1.2' fill='white' opacity='0.6'/%3E%3Ccircle cx='346' cy='183' r='1' fill='white' opacity='0.9'/%3E%3Ccircle cx='123' cy='232' r='1.8' fill='white' opacity='0.9'/%3E%3Ccircle cx='341' cy='54' r='1.8' fill='white' opacity='0.9'/%3E%3Ccircle cx='37' cy='277' r='1' fill='white' opacity='0.6'/%3E%3Ccircle cx='710' cy='227' r='1' fill='white' opacity='0.9'/%3E%3Ccircle cx='601' cy='44' r='1.2' fill='white' opacity='0.6'/%3E%3Ccircle cx='1449' cy='248' r='1.8' fill='white' opacity='0.9'/%3E%3Ccircle cx='909' cy='448' r='1.8' fill='white' opacity='0.9'/%3E%3Ccircle cx='122' cy='269' r='0.8' fill='white' opacity='0.6'/%3E%3Ccircle cx='1488' cy='72' r='1.8' fill='white' opacity='0.4'/%3E%3Ccircle cx='1369' cy='244' r='0.8' fill='white' opacity='0.6'/%3E%3Ccircle cx='1512' cy='189' r='1.8' fill='white' opacity='0.9'/%3E%3Ccircle cx='500' cy='239' r='1.8' fill='white' opacity='0.9'/%3E%3Ccircle cx='432' cy='418' r='1.2' fill='white' opacity='0.4'/%3E%3Ccircle cx='22' cy='110' r='0.8' fill='white' opacity='0.9'/%3E%3Ccircle cx='251' cy='340' r='1.8' fill='white' opacity='0.4'/%3E%3Ccircle cx='1436' cy='337' r='0.8' fill='white' opacity='0.9'/%3E%3Ccircle cx='1582' cy='425' r='0.8' fill='white' opacity='0.4'/%3E%3Ccircle cx='687' cy='215' r='1' fill='white' opacity='0.4'/%3E%3Ccircle cx='837' cy='422' r='1.8' fill='white' opacity='0.4'/%3E%3Ccircle cx='1566' cy='368' r='0.8' fill='white' opacity='0.4'/%3E%3Ccircle cx='999' cy='205' r='1' fill='white' opacity='0.4'/%3E%3Ccircle cx='571' cy='70' r='1.2' fill='white' opacity='0.6'/%3E%3Ccircle cx='224' cy='188' r='1.2' fill='white' opacity='0.9'/%3E%3Ccircle cx='932' cy='189' r='1' fill='white' opacity='0.6'/%3E%3Ccircle cx='1175' cy='107' r='0.8' fill='white' opacity='0.9'/%3E%3Ccircle cx='1428' cy='353' r='1.2' fill='white' opacity='0.6'/%3E%3Ccircle cx='434' cy='308' r='1' fill='white' opacity='0.9'/%3E%3Ccircle cx='446' cy='108' r='1' fill='white' opacity='0.9'/%3E%3Ccircle cx='1568' cy='412' r='0.8' fill='white' opacity='0.9'/%3E%3Ccircle cx='97' cy='122' r='1.8' fill='white' opacity='0.4'/%3E%3Ccircle cx='997' cy='46' r='1.2' fill='white' opacity='0.4'/%3E%3Ccircle cx='1209' cy='411' r='1' fill='white' opacity='0.9'/%3E%3Ccircle cx='376' cy='442' r='1.8' fill='white' opacity='0.6'/%3E%3Ccircle cx='567' cy='152' r='1.8' fill='white' opacity='0.9'/%3E%3Ccircle cx='213' cy='391' r='0.8' fill='white' opacity='0.6'/%3E%3Ccircle cx='1295' cy='281' r='1' fill='white' opacity='0.6'/%3E%3Ccircle cx='679' cy='116' r='1' fill='white' opacity='0.6'/%3E%3Ccircle cx='246' cy='376' r='1.2' fill='white' opacity='0.6'/%3E%3Ccircle cx='878' cy='336' r='1' fill='white' opacity='0.6'/%3E%3Ccircle cx='1046' cy='261' r='1.8' fill='white' opacity='0.6'/%3E%3Ccircle cx='126' cy='37' r='1.8' fill='white' opacity='0.9'/%3E%3Cellipse cx='320' cy='324' rx='280' ry='11' fill='%23ffd9f5' opacity='.22'/%3E%3Cellipse cx='1200' cy='396' rx='320' ry='11' fill='%23ffd9f5' opacity='.22'/%3E%3Cellipse cx='640' cy='450' rx='240' ry='11' fill='%23ffd9f5' opacity='.22'/%3E%3Cpolygon points='-192,396 400,261 480,243 560,261 1280,396' fill='%23703aa8'/%3E%3Cpolygon points='400,261 480,243 560,261 512,274 480,266 440,279' fill='%23f6dcff' opacity='.85'/%3E%3Cpolygon points='0,900 0,399 114,380 229,391 343,376 457,375 571,410 686,413 800,361 914,398 1029,399 1143,351 1257,384 1371,361 1486,384 1600,374 1600,900' fill='%2352257f'/%3E%3Cpolygon points='0,900 0,413 114,408 229,405 343,399 457,408 571,399 686,440 800,420 914,399 1029,412 1143,400 1257,436 1371,420 1486,430 1600,417 1600,900' fill='%2335175c'/%3E%3Cpolygon points='0,900 0,453 114,456 229,464 343,441 457,468 571,452 686,440 800,465 914,451 1029,449 1143,467 1257,456 1371,446 1486,454 1600,445 1600,900' fill='%231f0e3a'/%3E%3Crect y='486' width='1600' height='900' fill='url%28%23l%29'/%3E%3Crect x='1038' y='495' width='99' height='27' rx='6' fill='%23f3c6ff' opacity='.25'/%3E%3Cg fill='%23120626'%3E%3Crect x='184' y='382' width='7' height='81'/%3E%3Crect x='257' y='382' width='7' height='81'/%3E%3Crect x='171' y='374' width='105' height='8'/%3E%3Crect x='179' y='399' width='89' height='5'/%3E%3C/g%3E%3Cellipse cx='724' cy='277' rx='4' ry='2.2' fill='%23ffb8dc' opacity='.7' transform='rotate%28119 724 277%29'/%3E%3Cellipse cx='723' cy='423' rx='4' ry='2.2' fill='%23ffb8dc' opacity='.7' transform='rotate%2848 723 423%29'/%3E%3Cellipse cx='295' cy='253' rx='4' ry='2.2' fill='%23ffb8dc' opacity='.7' transform='rotate%28161 295 253%29'/%3E%3Cellipse cx='982' cy='92' rx='4' ry='2.2' fill='%23ffb8dc' opacity='.7' transform='rotate%28114 982 92%29'/%3E%3Cellipse cx='485' cy='45' rx='4' ry='2.2' fill='%23ffb8dc' opacity='.7' transform='rotate%28177 485 45%29'/%3E%3Cellipse cx='1015' cy='295' rx='4' ry='2.2' fill='%23ffb8dc' opacity='.7' transform='rotate%28101 1015 295%29'/%3E%3Cellipse cx='1544' cy='324' rx='4' ry='2.2' fill='%23ffb8dc' opacity='.7' transform='rotate%28157 1544 324%29'/%3E%3Cellipse cx='1040' cy='308' rx='4' ry='2.2' fill='%23ffb8dc' opacity='.7' transform='rotate%28135 1040 308%29'/%3E%3Cellipse cx='101' cy='18' rx='4' ry='2.2' fill='%23ffb8dc' opacity='.7' transform='rotate%2861 101 18%29'/%3E%3Cellipse cx='959' cy='385' rx='4' ry='2.2' fill='%23ffb8dc' opacity='.7' transform='rotate%2883 959 385%29'/%3E%3Cellipse cx='705' cy='417' rx='4' ry='2.2' fill='%23ffb8dc' opacity='.7' transform='rotate%28132 705 417%29'/%3E%3Cellipse cx='374' cy='146' rx='4' ry='2.2' fill='%23ffb8dc' opacity='.7' transform='rotate%281 374 146%29'/%3E%3Cellipse cx='1060' cy='226' rx='4' ry='2.2' fill='%23ffb8dc' opacity='.7' transform='rotate%2871 1060 226%29'/%3E%3Cellipse cx='651' cy='273' rx='4' ry='2.2' fill='%23ffb8dc' opacity='.7' transform='rotate%2821 651 273%29'/%3E%3Cellipse cx='1132' cy='156' rx='4' ry='2.2' fill='%23ffb8dc' opacity='.7' transform='rotate%2858 1132 156%29'/%3E%3Cellipse cx='821' cy='15' rx='4' ry='2.2' fill='%23ffb8dc' opacity='.7' transform='rotate%28144 821 15%29'/%3E%3Cellipse cx='1226' cy='198' rx='4' ry='2.2' fill='%23ffb8dc' opacity='.7' transform='rotate%2874 1226 198%29'/%3E%3Cellipse cx='618' cy='474' rx='4' ry='2.2' fill='%23ffb8dc' opacity='.7' transform='rotate%28175 618 474%29'/%3E%3Cellipse cx='1' cy='104' rx='4' ry='2.2' fill='%23ffb8dc' opacity='.7' transform='rotate%2813 1 104%29'/%3E%3Cellipse cx='752' cy='485' rx='4' ry='2.2' fill='%23ffb8dc' opacity='.7' transform='rotate%28101 752 485%29'/%3E%3Cellipse cx='672' cy='280' rx='4' ry='2.2' fill='%23ffb8dc' opacity='.7' transform='rotate%2850 672 280%29'/%3E%3Cellipse cx='1246' cy='134' rx='4' ry='2.2' fill='%23ffb8dc' opacity='.7' transform='rotate%2822 1246 134%29'/%3E%3Cellipse cx='498' cy='7' rx='4' ry='2.2' fill='%23ffb8dc' opacity='.7' transform='rotate%28104 498 7%29'/%3E%3Cellipse cx='1213' cy='58' rx='4' ry='2.2' fill='%23ffb8dc' opacity='.7' transform='rotate%2863 1213 58%29'/%3E%3Cellipse cx='1131' cy='5' rx='4' ry='2.2' fill='%23ffb8dc' opacity='.7' transform='rotate%28119 1131 5%29'/%3E%3Cellipse cx='1275' cy='88' rx='4' ry='2.2' fill='%23ffb8dc' opacity='.7' transform='rotate%28143 1275 88%29'/%3E%3C/svg%3E");background-position:center top}
+}
+@media (min-width:960px){
+  body.theme-morado .tabbar{background:rgba(16,9,32,.55)}
+}
+/* FIN TEMA MORADO */
+
+/* --- Música --- */
+.mz-dot{width:10px;height:10px;border-radius:50%;display:inline-block;flex:none}
+.mz-plat .mz-big{font-size:24px;font-weight:800;letter-spacing:-.02em;margin-top:8px}
+.mz-plat .mz-big small{font-size:13px;font-weight:600;color:var(--mut);letter-spacing:0}
+.mz-minis{display:flex;gap:14px;margin-top:8px;flex-wrap:wrap}
+.mz-mini{display:flex;flex-direction:column;font-size:11.5px;color:var(--mut)}
+.mz-mini b{font-size:14px;color:var(--txt)}
+.mz-chart{width:100%;height:auto;display:block;margin-top:4px}
+.mz-report{margin-top:8px;font-size:14px;line-height:1.5}
+.mz-report p{margin:0 0 10px}
+.mz-report p:last-child{margin-bottom:0}
+.link.block{display:block;margin:10px auto 0}
+
+/* --- Comida --- */
+.fd-star{font-size:20px;color:var(--mut);width:34px;height:34px}
+.fd-star.on{color:var(--warn)}
+.fd-pick{border-color:var(--acc);box-shadow:0 0 0 1px var(--acc)}
+.kicker{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--mut);margin-bottom:4px}
+
+/* --- Tabbar con scroll horizontal si hay muchas pestañas --- */
+.tabbar{overflow-x:auto;scrollbar-width:none;-ms-overflow-style:none}
+.tabbar::-webkit-scrollbar{display:none}
+.tabbar button{flex:1 0 auto;min-width:52px}
+
+/* Sin zoom por doble toque: se permite scroll vertical/horizontal normal */
+html,body{touch-action:manipulation}
+
+/* ===== Tema azul · anime · paisaje (22 nov 2026): inspirado en la referencia subida por el propietario
+   (cielo azul inmenso, sol bajo, colinas, pradera oscura, figura sentada, postes).
+   Escena ORIGINAL dibujada para la Sala en SVG inline: estilo y paleta, sin copiar la imagen.
+   Para volver al tema morado: anadir la clase theme-morado al <body>, o git revert de este commit. */
+:root{
+  --bg:#081226;
+  --surface:rgba(14,28,58,.68);
+  --surface2:rgba(24,46,90,.7);
+  --line:rgba(160,205,255,.16);
+  --txt:#eef6ff;
+  --mut:#a9c4e6;
+  --acc:#7cc7ff;
+  --acc-soft:rgba(124,199,255,.18);
+}
+body::before{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;
+  background:url('fondo-fuji.svg?v=1') 62% top/cover no-repeat}
+body::after{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;
+  background:linear-gradient(180deg,rgba(10,8,34,0) 0%,rgba(10,8,34,.06) 40%,rgba(10,8,34,.5) 62%,rgba(8,6,30,.84) 80%,rgba(6,5,26,.93) 100%)}
+@media (min-width:960px){
+  .tabbar{background:rgba(6,14,34,.55)}
+}
+/* FIN TEMA AZUL */
+
+/* ===== Rediseño moderno (22 nov 2026) =====
+   Solo CSS, anadido al final: gana a las reglas anteriores por orden.
+   Revertir: git revert de este commit. No toca colores del tema azul
+   ni el bloque body.theme-morado (sigue funcionando igual). */
+:root{
+  --rad:20px;
+  --rad-s:14px;
+  --font:'Plus Jakarta Sans',-apple-system,system-ui,'Segoe UI',Roboto,sans-serif;
+  --shadow:0 10px 30px rgba(2,8,26,.35);
+  --shadow-soft:0 4px 16px rgba(2,8,26,.25);
+}
+::selection{background:var(--acc-soft)}
+
+/* Tipografía */
+body{letter-spacing:-.003em}
+h1{font-size:30px;font-weight:800;letter-spacing:-.035em}
+.sec h2, h2{letter-spacing:-.02em}
+.sub{opacity:.92}
+
+/* Tarjetas y bloques: borde más fino, sombra suave, transición */
+.card,.tile,.add-box,.empty,.login-card{
+  border-color:rgba(160,205,255,.13);
+  box-shadow:var(--shadow-soft);
+  transition:transform .22s var(--ease),box-shadow .22s var(--ease),background .22s,border-color .22s;
+}
+.card.clickable:hover{border-color:rgba(160,205,255,.22)}
+
+/* Hero con halo de luz */
+.hero{box-shadow:0 12px 34px rgba(37,99,235,.34),inset 0 1px 0 rgba(255,255,255,.14)}
+.hero h3{letter-spacing:-.015em}
+
+/* Botones: más redondos y con carácter */
+.btn{border-radius:16px;font-weight:700;letter-spacing:.005em}
+.btn.primary{box-shadow:0 8px 22px rgba(59,130,246,.35),inset 0 1px 0 rgba(255,255,255,.18)}
+.btn.primary:active{box-shadow:0 3px 10px rgba(59,130,246,.3)}
+.icon-btn{border-radius:14px}
+
+/* Inputs: foco con anillo luminoso */
+input,textarea,select{border-radius:14px;transition:border-color .18s,box-shadow .18s,background .18s}
+input:focus,textarea:focus,select:focus{
+  border-color:var(--acc);
+  box-shadow:0 0 0 3.5px var(--acc-soft);
+}
+
+/* Checks y chips más suaves */
+.chk{border-radius:10px}
+.count{border-radius:999px}
+
+/* Barra de progreso con brillo */
+.bar i{background:linear-gradient(90deg,var(--acc),#38bdf8)}
+
+/* Scroll principal: sin barra visible en móvil, fina en escritorio */
+main{scrollbar-width:thin;scrollbar-color:rgba(160,205,255,.25) transparent}
+main::-webkit-scrollbar{width:5px}
+main::-webkit-scrollbar-thumb{background:rgba(160,205,255,.22);border-radius:99px}
+
+/* Animación de entrada algo más viva */
+.rise{animation:rise .55s var(--ease) both}
+
+/* ===== Móvil: barra inferior flotante tipo "dock" ===== */
+@media (max-width:959.5px){
+  .tabbar{
+    margin:0 12px calc(10px + env(safe-area-inset-bottom,0px));
+    padding:6px 8px;
+    border:1px solid var(--line);
+    border-radius:24px;
+    box-shadow:0 14px 34px rgba(2,8,26,.5);
+    backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
+    scroll-padding:0 10px;
+  }
+  .tabbar button{border-radius:16px}
+  .tabbar button.on .ic-wrap{border-radius:11px}
+}
+
+/* ===== Escritorio: barra lateral pulida ===== */
+@media (min-width:960px){
+  .tabbar{border-right:1px solid rgba(160,205,255,.12);gap:4px}
+  .tabbar::before{
+    content:'Mi Sala';font-family:var(--font);
+    background:linear-gradient(135deg,#9fd8ff,#38bdf8);
+    -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;
+    padding-bottom:26px;
+  }
+  .tabbar button{border-radius:14px;font-weight:600}
+  .tabbar button.on{font-weight:700}
+  .card.clickable:hover{transform:translateY(-2px);box-shadow:var(--shadow)}
+  .login-card{box-shadow:var(--shadow)}
+  .login-wrap{box-shadow:none}
+}
+
+/* Aire y ritmo (inspirado en tendencias 2025: tipografía cuidada + espacio generoso) */
+.card{padding:18px}
+.sec{margin-top:26px}
+.sec h2{font-size:17px;letter-spacing:-.01em}
+.card.clickable,.tile,.btn,.chip,.icon-btn,.tabbar button{transition-timing-function:var(--ease)}
+
+/* Logo de acceso con halo */
+.logo-mark{box-shadow:0 10px 26px rgba(56,189,248,.4),inset 0 1px 0 rgba(255,255,255,.25)}
+/* FIN REDISEÑO MODERNO */
+
+/* ===== Ajuste móvil: dock sin scroll + chips de Comida en una línea (22 nov 2026) ===== */
+@media (max-width:959.5px){
+  /* 8 pestañas visibles sin scroll horizontal */
+  .tabbar{padding:6px 6px}
+  .tabbar button{min-width:0;flex:1 1 0;padding:6px 2px;font-size:9.5px;gap:3px;letter-spacing:0}
+  .tabbar .ic-wrap{width:36px;height:25px}
+  .tabbar svg{width:20px;height:20px}
+  /* Chips de filtro de Comida: fila única con scroll lateral suave */
+  #fd-filters.chips,#fd-kinds.chips{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;-ms-overflow-style:none}
+  #fd-filters.chips::-webkit-scrollbar,#fd-kinds.chips::-webkit-scrollbar{display:none}
+  #fd-filters .chip,#fd-kinds .chip{flex:0 0 auto;padding:9px 15px;white-space:nowrap}
+}
+/* FIN AJUSTE MÓVIL */
+
+/* ===== iOS standalone: fundir el cielo con la barra de estado negra (22 nov 2026) =====
+   La barra de estado en la app instalada es negra opaca (meta black; black-translucent
+   esta descartado por el bug 313800 de WebKit: deja una franja muerta ABAJO).
+   Para que no se note el corte, el fondo se funde a negro puro en los primeros
+   ~170px: la barra negra se lee como parte del cielo nocturno. Solo en standalone. */
+@media (display-mode:standalone){
+  body::after{background:
+    linear-gradient(180deg,#000 0,#000 44px,rgba(0,2,10,.75) 90px,rgba(0,2,10,0) 170px),
+    linear-gradient(180deg,rgba(6,14,34,0) 0%,rgba(6,14,34,.05) 40%,rgba(6,14,34,.55) 62%,rgba(6,14,34,.86) 80%,rgba(6,14,34,.94) 100%)}
+}
+.ios-standalone body::after{background:
+  linear-gradient(180deg,#000 0,#000 44px,rgba(0,2,10,.75) 90px,rgba(0,2,10,0) 170px),
+  linear-gradient(180deg,rgba(6,14,34,0) 0%,rgba(6,14,34,.05) 40%,rgba(6,14,34,.55) 62%,rgba(6,14,34,.86) 80%,rgba(6,14,34,.94) 100%)}
+/* FIN FUNDO SUPERIOR */
+
+/* ===== Escritorio a todo lo ancho (22 nov 2026) =====
+   Petición de diseño: sidebar pegada a la izquierda, contenido usando todo el
+   ancho, sin márgenes muertos, tipografía y tarjetas algo mayores, rejillas
+   equilibradas. Solo >=960px; móvil y tablet intactos. */
+@media (min-width:960px){
+  #app{max-width:none;margin:0}
+  .tabbar{width:240px;padding:36px 14px 36px 18px}
+  .tabbar button{font-size:15px;padding:10px 14px}
+  main{max-width:1200px;padding:44px 48px 64px}
+  h1{font-size:36px}
+  h1.small-h{font-size:27px}
+  .sec h2{font-size:19px}
+  .sec{margin-top:32px}
+  .card{padding:20px;margin-bottom:12px}
+  .tile{padding:18px 20px}
+  .tile .big{font-size:30px}
+  .hero{padding:24px}
+  .hero h3{font-size:21px}
+  .btn{font-size:16px}
+  input,textarea,select{font-size:16px}
+  /* rejillas que reparten el ancho: 2 tarjetas -> 50/50, 4 -> 25% cada una */
+  .tiles{grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px}
+}
+/* FIN ESCRITORIO ANCHO */
+
+/* Barra de estado iOS: el tema pasa a negro puro para fundirse con el fondo */
+html{background:#000}
+
+/* ===== Look "MiSala" v2 (mockup Fuji, 22 nov 2026) ===== */
+/* Nombre del saludo en degradado cian-violeta */
+.hgrad{background:linear-gradient(90deg,#7cc7ff,#c88aff);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.h1-sub{display:none}
+@media (min-width:960px){
+  .h1-sub{display:block;font-size:15px;margin-top:3px;opacity:.9}
+}
+/* Aurora violeta arriba a la derecha, mezclada con la escena Fuji */
+body::after{background:
+  radial-gradient(56% 42% at 84% -6%, rgba(168,110,255,.30), rgba(168,110,255,0) 72%),
+  linear-gradient(180deg,rgba(10,8,34,0) 0%,rgba(10,8,34,.06) 40%,rgba(10,8,34,.5) 62%,rgba(8,6,30,.84) 80%,rgba(6,5,26,.93) 100%)}
+@media (display-mode:standalone){
+  body::after{background:
+    linear-gradient(180deg,#000 0,#000 44px,rgba(4,2,16,.75) 90px,rgba(4,2,16,0) 170px),
+    radial-gradient(70% 40% at 88% -4%, rgba(168,110,255,.22), rgba(168,110,255,0) 70%),
+    linear-gradient(180deg,rgba(10,8,34,0) 0%,rgba(10,8,34,.06) 40%,rgba(10,8,34,.5) 62%,rgba(8,6,30,.84) 80%,rgba(6,5,26,.93) 100%)}
+}
+.ios-standalone body::after{background:
+  linear-gradient(180deg,#000 0,#000 44px,rgba(4,2,16,.75) 90px,rgba(4,2,16,0) 170px),
+  radial-gradient(70% 40% at 88% -4%, rgba(168,110,255,.22), rgba(168,110,255,0) 70%),
+  linear-gradient(180deg,rgba(10,8,34,0) 0%,rgba(10,8,34,.06) 40%,rgba(10,8,34,.5) 62%,rgba(8,6,30,.84) 80%,rgba(6,5,26,.93) 100%)}
+/* Tarjetas de cristal con borde luminoso */
+.card,.tile,.add-box,.empty,.login-card,.ag-ev{
+  border:1px solid rgba(150,180,255,.20);
+  box-shadow:0 10px 30px rgba(4,4,24,.35),inset 0 1px 0 rgba(190,215,255,.09);
+}
+.card.clickable:hover{border-color:rgba(150,180,255,.42);box-shadow:0 0 26px rgba(140,110,255,.16),0 10px 30px rgba(4,4,24,.35)}
+/* Hero con borde de luz */
+.hero{border:1px solid rgba(190,215,255,.38);box-shadow:0 14px 40px rgba(60,60,200,.4),inset 0 1px 0 rgba(255,255,255,.2)}
+/* Estado vacío: icono en círculo luminoso */
+.empty{border:1px solid rgba(150,180,255,.18);padding:30px 22px}
+.empty svg{color:var(--acc);background:var(--acc-soft);border-radius:50%;width:30px;height:30px;padding:15px;margin-bottom:12px;box-shadow:0 0 22px rgba(140,110,255,.22)}
+/* Tarjetas de estadística: icono en pastilla luminosa */
+.tile .lab svg{background:var(--acc-soft);border-radius:9px;padding:5px;width:24px;height:24px;color:var(--acc);box-shadow:0 0 14px rgba(124,199,255,.18)}
+/* Agenda de hoy: filas con aire y hover suave */
+.ag-ev{padding:13px 14px;border-radius:16px;margin-bottom:8px}
+.ag-ev:hover{background:var(--surface2)}
+.ag-dot{width:10px;height:10px;border-radius:50%;box-shadow:0 0 10px currentColor}
+/* Botones CTA bajo el saludo (solo escritorio) */
+.cta-row{display:none}
+@media (min-width:960px){
+  .cta-row{display:flex;gap:12px;margin:14px 0 4px}
+  .cta-row .btn{border-radius:999px;padding:12px 22px;font-size:15px}
+  .cta-ghost{background:rgba(150,180,255,.10);border:1px solid rgba(150,180,255,.28)}
+  .cta-ghost:hover{background:rgba(150,180,255,.18)}
+}
+/* Buscador ⌘K: pastilla fija arriba (solo escritorio) */
+#sb-search{display:none}
+@media (min-width:960px){
+  body.logged-in #sb-search{display:flex;align-items:center;gap:10px;position:fixed;top:20px;right:26px;z-index:60;
+    width:min(320px,30vw);padding:11px 16px;border-radius:999px;cursor:pointer;
+    background:rgba(14,16,44,.72);border:1px solid rgba(150,180,255,.24);color:var(--mut);
+    font-size:14px;font-weight:500;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+    box-shadow:0 8px 24px rgba(4,4,24,.35)}
+  #sb-search:hover{border-color:rgba(150,180,255,.45);color:var(--txt)}
+  #sb-search .kbd{margin-left:auto;font-size:11.5px;font-weight:600;color:var(--mut);
+    border:1px solid rgba(150,180,255,.25);border-radius:7px;padding:2px 7px;background:rgba(150,180,255,.08)}
+}
+/* Paleta del buscador */
+.sbp-overlay{position:fixed;inset:0;z-index:200;background:rgba(3,4,18,.6);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);
+  display:flex;align-items:flex-start;justify-content:center;padding:12vh 18px 18px}
+.sbp{width:100%;max-width:520px;background:rgba(16,18,50,.96);border:1px solid rgba(150,180,255,.28);border-radius:20px;
+  box-shadow:0 30px 80px rgba(2,2,16,.6);overflow:hidden}
+.sbp input{width:100%;background:transparent;border:0;border-bottom:1px solid rgba(150,180,255,.18);border-radius:0;
+  padding:16px 18px;font-size:16px;margin:0;color:var(--txt)}
+.sbp input:focus{outline:none;border-color:rgba(150,180,255,.4)}
+.sbp-list{max-height:46vh;overflow-y:auto;padding:8px}
+.sbp-item{display:flex;align-items:center;gap:12px;width:100%;text-align:left;background:none;border:0;border-radius:12px;
+  padding:11px 12px;color:var(--txt);font-size:14.5px;cursor:pointer}
+.sbp-item:hover,.sbp-item.sel{background:rgba(150,180,255,.12)}
+.sbp-item .sic{flex:none;width:32px;height:32px;border-radius:10px;background:var(--acc-soft);color:var(--acc);display:flex;align-items:center;justify-content:center}
+.sbp-item small{display:block;color:var(--mut);font-size:12px}
+.sbp-empty{padding:22px;text-align:center;color:var(--mut);font-size:14px}
+/* Sidebar: marca MiSala con logo M en degradado */
+@media (min-width:960px){
+  .tabbar::before{
+    content:'MiSala';font-size:21px;font-weight:800;letter-spacing:-.02em;color:var(--txt);
+    -webkit-text-fill-color:currentColor;background-clip:border-box;-webkit-background-clip:border-box;
+    padding-left:48px;min-height:36px;display:flex;align-items:center;
+    background:url("data:image/svg+xml,%3Csvg%20xmlns%3D'http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg'%20viewBox%3D'0%200%2064%2064'%3E%3Cdefs%3E%3ClinearGradient%20id%3D'lg'%20x1%3D'0'%20y1%3D'0'%20x2%3D'1'%20y2%3D'1'%3E%3Cstop%20offset%3D'0'%20stop-color%3D'%2338bdf8'/%3E%3Cstop%20offset%3D'.5'%20stop-color%3D'%232563eb'/%3E%3Cstop%20offset%3D'1'%20stop-color%3D'%238b5cf6'/%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Crect%20width%3D'64'%20height%3D'64'%20rx%3D'18'%20fill%3D'url(%23lg)'/%3E%3Cpath%20d%3D'M23%2045V21.5L32%2032l9-10.5V45'%20fill%3D'none'%20stroke%3D'white'%20stroke-width%3D'4'%20stroke-linecap%3D'round'%20stroke-linejoin%3D'round'/%3E%3C%2Fsvg%3E") left center/36px no-repeat;
+  }
+}
+/* Sidebar: Configuración y tarjeta de ánimo (solo escritorio) */
+.tabbar .side-cfg,.tabbar .side-card{display:none}
+@media (min-width:960px){
+  .tabbar{padding-bottom:26px}
+  .tabbar .side-cfg{display:flex;flex-direction:row;justify-content:flex-start;gap:12px;width:100%;
+    font-size:14px;padding:10px 14px;border-radius:12px;background:none;color:var(--mut);
+    font-weight:600;align-items:center;cursor:pointer;margin-top:auto}
+  .side-cfg:hover{background:var(--surface2);color:var(--txt)}
+  .side-cfg .ic-wrap{width:24px;height:24px}
+  .tabbar .side-card{display:block;margin-top:12px;padding:16px;border-radius:18px;
+    background:linear-gradient(150deg,rgba(59,130,246,.20),rgba(168,85,247,.18));
+    border:1px solid rgba(150,180,255,.24);box-shadow:inset 0 1px 0 rgba(190,215,255,.10)}
+  .side-card .sc-emo{font-size:22px}
+  .side-card b{display:block;font-size:13.5px;margin:6px 0 8px}
+  .side-card .bar{margin-top:0}
+  .side-card small{display:block;margin-top:7px;color:var(--mut);font-size:11.5px}
+}
+
+/* Fila de 4 tarjetas + columnas Agenda/Progreso (referencia de diseño Inicio) */
+.hoy-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
+.hoy-row .hero{order:-1;grid-column:1/-1;margin:0}
+.hoy-row .tile{margin:0}
+.hoy-cols{display:grid;grid-template-columns:1fr;gap:0}
+.prog-card h2{font-size:17px;font-weight:700;letter-spacing:-.01em;margin-bottom:10px}
+.prog-card .ring-wrap{display:flex;justify-content:center;padding:6px 0 10px}
+.prog-msg{text-align:center;font-size:14px}
+.prog-msg .prog-sub{color:var(--mut);font-size:12.5px;margin-top:2px}
+@media (min-width:960px){
+  .hoy-row{grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px}
+  .hoy-row .hero{order:0;grid-column:auto;padding:18px;min-height:120px;
+    background:linear-gradient(160deg,rgba(37,99,235,.72),rgba(139,92,246,.55)),url('fondo-fuji.svg?v=1') 92% 80%/330% no-repeat,linear-gradient(135deg,#2563eb,#38bdf8)}
+  .hoy-row .hero h3{font-size:17px}
+  .hoy-row .hero .glyph{font-size:64px;opacity:.25}
+  .hoy-cols{grid-template-columns:1.9fr 1.1fr;gap:14px;align-items:start;margin-top:4px}
+  .hoy-cols .sec{margin-top:18px}
+  .prog-card{margin-top:18px}
+}
+/* FIN HOY GRID */
+/* ===== Pasada de brillo (petición: brillos como la referencia) ===== */
+.card,.tile,.add-box,.empty,.ag-ev{
+  background:rgba(16,20,52,.55);
+  -webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);
+  border:1px solid rgba(150,190,255,.28);
+  box-shadow:0 0 0 1px rgba(120,150,255,.06),0 12px 34px rgba(4,4,26,.45),0 0 22px rgba(96,110,255,.10),inset 0 1px 0 rgba(200,225,255,.12);
+}
+.card.clickable:hover,.ag-ev:hover{
+  border-color:rgba(150,200,255,.5);
+  box-shadow:0 0 30px rgba(110,120,255,.22),0 12px 34px rgba(4,4,26,.45);
+}
+.tile .lab svg{box-shadow:0 0 18px rgba(124,199,255,.35)}
+/* Botón principal luminoso */
+.btn.primary{background:linear-gradient(135deg,#3b82f6,#8b5cf6);box-shadow:0 8px 26px rgba(99,102,241,.45),inset 0 1px 0 rgba(255,255,255,.25)}
+.btn.primary:hover{box-shadow:0 8px 34px rgba(99,102,241,.65),inset 0 1px 0 rgba(255,255,255,.3)}
+/* Hero brillante */
+.hero{
+  background:linear-gradient(135deg,#3b82f6 0%,#8b5cf6 60%,#a855f7 100%);
+  border:1px solid rgba(200,225,255,.5);
+  box-shadow:0 16px 48px rgba(99,102,241,.55),0 0 40px rgba(139,92,246,.30),inset 0 1px 0 rgba(255,255,255,.25);
+}
+.hero .kicker{color:rgba(230,240,255,.85)}
+/* Anillo de progreso con brillo */
+.prog-card{border:1px solid rgba(150,190,255,.32);box-shadow:0 0 34px rgba(99,102,241,.18),0 12px 34px rgba(4,4,26,.45),inset 0 1px 0 rgba(200,225,255,.12)}
+.prog-card .ring-wrap svg{filter:drop-shadow(0 0 9px rgba(99,180,255,.5))}
+/* Barras de progreso luminosas */
+.bar i{box-shadow:0 0 10px rgba(124,199,255,.5)}
+.bar i.warn{box-shadow:0 0 10px rgba(250,200,100,.5)}
+/* Sidebar: activo con brillo */
+@media (min-width:960px){
+  .tabbar button.on{background:linear-gradient(90deg,rgba(59,130,246,.28),rgba(139,92,246,.22));color:#cfe8ff;
+    box-shadow:0 0 22px rgba(99,102,241,.30),inset 0 1px 0 rgba(200,225,255,.12)}
+  .tabbar button.on .ic-wrap{color:#9fd8ff;filter:drop-shadow(0 0 6px rgba(124,199,255,.6))}
+  .side-card{box-shadow:0 0 26px rgba(139,92,246,.22),inset 0 1px 0 rgba(200,225,255,.12)}
+  #sb-search{box-shadow:0 8px 24px rgba(4,4,24,.4),0 0 18px rgba(99,102,241,.18)}
+}
+/* Buscador: paleta luminosa */
+.sbp{box-shadow:0 30px 80px rgba(2,2,16,.6),0 0 44px rgba(99,102,241,.22)}
+/* FIN BRILLO */
+
+/* FIN LOOK MISALA */
+
+/* Fecha del saludo con mas presencia (peticion de diseño) */
+@media (min-width:960px){
+  .date-cap{font-size:15px;font-weight:700;color:#cfe0ff;letter-spacing:.08em}
+}
+/* FIN FECHA */
+
+/* Agenda: eventos y chips en degradado con el color de su calendario (referencia de diseño) */
+.ag-ev-cal{color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.35)}
+.ag-ev-cal small{color:rgba(255,255,255,.82)}
+.ag-ev-cal svg{color:rgba(255,255,255,.85)}
+.ag-ev-cal:hover{filter:brightness(1.12)}
+.ag-calpill{display:inline-block;padding:3px 12px;border-radius:999px;color:#fff;font-size:12px;font-weight:600;text-shadow:0 1px 2px rgba(0,0,0,.35)}
+/* FIN AGENDA DEGRADADO */
+
+/* Agenda: el dia de hoy destacado como tarjeta de cristal (peticion de diseño) */
+.ag-today{background:rgba(255,255,255,.055);border:1px solid rgba(255,255,255,.13);border-radius:18px;padding:4px 10px 10px;margin-bottom:12px;
+  box-shadow:0 8px 24px rgba(4,4,24,.25),inset 0 1px 0 rgba(255,255,255,.08)}
+.ag-today .ag-ev{margin-bottom:0}
+.ag-today .ag-dayhead{padding-top:10px}
+/* FIN HOY DESTACADO */
+
+/* Legibilidad: sombra oscura sutil en textos planos sobre el fondo (peticion de diseño) */
+#app{text-shadow:0 1px 3px rgba(3,5,18,.45)}
+/* Etiquetas de dia de la Agenda: blancas, gruesas y con sombra marcada para leerse sobre el Fuji */
+.ag-dayhead{color:#fff;font-weight:800;text-shadow:0 1px 6px rgba(3,5,18,.8),0 0 2px rgba(3,5,18,.55)}
+.ag-dayhead span{font-weight:800}
+.ag-today .ag-dayhead{color:#fff}
+/* FIN LEGIBILIDAD */
+
+/* Comida: receta desplegable con cantidades (peticion de diseño) */
+.fd-rec{margin-top:10px;border-top:1px solid var(--line);padding-top:10px}
+.fd-rec-sec{margin-bottom:8px}
+.fd-rec-sec:last-child{margin-bottom:0}
+.fd-rec-sec>b{display:block;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.07em;color:var(--mut);margin-bottom:6px}
+.fd-rec ul{list-style:none;margin:0;padding:0}
+.fd-rec ul li{display:flex;justify-content:space-between;gap:10px;font-size:13px;padding:2px 0}
+.fd-qty{color:var(--acc);font-weight:700;white-space:nowrap;text-align:right}
+.fd-rec ol{margin:0;padding-left:18px;font-size:13px}
+.fd-rec ol li{margin:3px 0;color:var(--txt)}
+.fd-chev{transition:transform .2s}
+.fd-chev.open{transform:rotate(90deg)}
+/* FIN RECETA */
+
+/* Comida receta: en pantallas estrechas la fila envuelve para que el nombre respire */
+@media (max-width:640px){
+  .fd-row{flex-wrap:wrap}
+  .fd-row .grow{flex:1 1 calc(100% - 46px)}
+  .fd-row .pill{margin-left:46px}
+}
+/* FIN RECETA MOVIL */
+
+/* ===== Musica: iconos de plataforma + panel del manager en tarjetas (22 nov 2026) ===== */
+.mz-platic{width:34px;height:34px;border-radius:10px;display:flex;align-items:center;justify-content:center;color:#fff;flex:none}
+.mz-rc-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
+.mz-rc-plat{background:var(--surface2);border:1px solid var(--line);border-radius:14px;padding:10px 12px}
+.mz-rc-plathead{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.mz-rc-text{font-size:13px;line-height:1.45;color:var(--mut)}
+.mz-rc-plan{margin-top:12px;border-top:1px solid var(--line);padding-top:12px}
+.mz-rc-plantitle{display:flex;align-items:center;gap:6px;font-weight:700;margin-bottom:10px;color:var(--acc)}
+.mz-rc-item{display:flex;align-items:flex-start;gap:10px;margin-bottom:8px;font-size:13.5px;line-height:1.45}
+.mz-rc-item .lang-badge{flex:none;width:28px;height:28px;font-size:13px;border-radius:9px}
+@media(max-width:720px){.mz-rc-grid{grid-template-columns:1fr}}
+
+/* ---- v51 (22-nov-2026): look maqueta — fondo propio fondo-sala, chips tintados en tiles, CTA degradado, tipografia mayor, veladura mas ligera ---- */
+body::before{background:url('fondo-sala.svg?v=3') center top/cover no-repeat}
+.tile-ic{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:8px;margin-right:6px;flex:none}
+.tile-ic svg{background:none!important;box-shadow:none!important;padding:0;width:13px;height:13px}
+.tile-ic.t-blue{background:linear-gradient(135deg,rgba(56,189,248,.38),rgba(37,99,235,.26));color:#7dd3fc}
+.tile-ic.t-violet{background:linear-gradient(135deg,rgba(168,85,247,.38),rgba(139,92,246,.26));color:#c4b5fd}
+.tile-ic.t-amber{background:linear-gradient(135deg,rgba(251,191,36,.34),rgba(244,114,182,.24));color:#fcd34d}
+.tile-note{margin-top:6px;font-size:10.5px;color:var(--mut)}
+@media (min-width:960px){
+  .top h1{font-size:44px}
+  .date-cap{font-size:14px}
+  .cta-row .btn.primary{background:linear-gradient(135deg,#2563eb,#38bdf8);border-radius:999px;box-shadow:0 10px 26px -8px rgba(56,189,248,.55)}
+  .tile{background:linear-gradient(160deg,rgba(255,255,255,.075),rgba(255,255,255,.02));backdrop-filter:blur(10px)}
+  .tile .big{font-size:30px}
+  body::after{background:linear-gradient(180deg,rgba(10,8,34,0) 0%,rgba(10,8,34,.03) 45%,rgba(10,8,34,.45) 68%,rgba(8,6,30,.85) 86%,rgba(6,5,26,.94) 100%)}
+}
+
+/* ---- v53 (22-nov-2026): Inicio a pantalla completa en escritorio; agenda como panel que llega abajo ---- */
+.ag-panel{background:rgba(255,255,255,.05);border:1px solid var(--line);border-radius:var(--rad);padding:12px;display:flex;flex-direction:column;gap:8px}
+.ag-panel .empty{background:none;border:none;padding:18px}
+.hoy-left .hero{margin-top:12px}
+@media (min-width:960px){
+  .hoy-fill{display:flex;flex-direction:column;height:100%;min-height:560px}
+  .hoy-fill .hoy-row{grid-template-columns:repeat(4,1fr)}
+  .hoy-fill .hoy-cols{flex:1;min-height:0;align-items:stretch}
+  .hoy-fill .hoy-left{display:flex;flex-direction:column;min-height:0}
+  .hoy-left .hero{margin-top:14px;padding:18px;min-height:120px;flex:none;
+    background:linear-gradient(160deg,rgba(37,99,235,.72),rgba(139,92,246,.55)),url('fondo-fuji.svg?v=1') 92% 80%/330% no-repeat,linear-gradient(135deg,#2563eb,#38bdf8)}
+  .hoy-fill .hoy-left .sec{flex:none}
+  .hoy-fill .ag-panel{flex:1;min-height:0;overflow-y:auto;margin-bottom:0}
+  .hoy-fill .prog-card{margin:0;height:100%;box-sizing:border-box;display:flex;flex-direction:column;justify-content:center}
+}
+
+/* ---- v54 (22-nov-2026): tarjetas tipo maqueta — iconos grandes, mini graficas, hero en la fila, Tu progreso enriquecido ---- */
+.tile-main{display:flex;align-items:center;gap:12px;margin-bottom:8px}
+.tile .tile-main .big{margin-top:0}
+.tile .tile-main .lab{margin-top:2px}
+.tile-ic{width:44px;height:44px;border-radius:14px;margin-right:0}
+.tile-ic svg{width:20px;height:20px}
+.spark{flex:none;filter:drop-shadow(0 0 6px rgba(124,199,255,.25))}
+.prog-card .row{align-items:center}
+.prog-card h2{margin:0}
+.prog-chart{margin:2px 0 8px;text-align:center}
+.prog-bars{display:flex;flex-direction:column;gap:7px;margin:4px 0 10px}
+.pb-row{display:flex;align-items:center;gap:10px;font-size:12px}
+.pb-row span{width:56px;color:var(--mut)}
+.pb-row b{width:38px;text-align:right;font-size:12px}
+.prog-card .ring-wrap svg{filter:drop-shadow(0 0 16px rgba(99,102,241,.5))}
+@media (min-width:960px){
+  .hoy-fill .hoy-row{grid-template-columns:1fr 1fr 1fr 1.7fr;align-items:stretch}
+  .hoy-fill .hoy-row .hero{order:0;grid-column:auto;margin:0;min-height:0}
+  .hoy-fill .ag-panel .ag-ev{flex:1;display:flex;align-items:center}
+  .hoy-fill .ag-panel .empty{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center}
+  .cta-row .btn{padding:13px 24px;font-size:15px}
+  body::after{background:linear-gradient(180deg,rgba(10,8,34,0) 0%,rgba(10,8,34,.02) 40%,rgba(10,8,34,.18) 58%,rgba(8,6,30,.55) 74%,rgba(6,5,26,.88) 88%,rgba(5,4,22,.95) 100%)}
+}
+
+/* ---- v55: mas ancho en escritorio y tarjetas con aire; chips 40px; link dentro de Tu progreso ---- */
+@media (min-width:960px){
+  #app{max-width:1440px}
+  .hoy-fill .hoy-row{grid-template-columns:1.1fr 1.1fr 1.1fr 1.5fr}
+  .tile-ic{width:40px;height:40px;border-radius:13px}
+  .tile-ic svg{width:18px;height:18px}
+  .prog-card .link{background:none;border:none;box-shadow:none;color:var(--acc);padding:4px 2px}
+}
+
+/* ---- v56: contenido del evento de agenda centrado en su fila estirada ---- */
+@media (min-width:960px){
+  .hoy-fill .ag-panel .ag-ev-main{display:flex;flex-direction:column;justify-content:center;gap:3px}
+  .hoy-fill .ag-panel .ag-ev b{font-size:15px}
+}
+
+/* ---- v58 (22-nov-2026): tema atardecer — fondo de foto propio (fondo-sala.webp, no incluido en la plantilla), paleta rosa/violeta/azul derivada de la imagen, fundido inferior a oscuro ---- */
+body::before{background:url('fondo-sala.webp?v=1') center 22%/cover no-repeat}
+body::after{background:
+  radial-gradient(52% 40% at 88% -4%, rgba(255,150,190,.14), rgba(255,150,190,0) 70%),
+  linear-gradient(180deg,rgba(30,12,52,0) 0%,rgba(28,11,48,.06) 42%,rgba(22,9,42,.48) 64%,rgba(15,6,30,.84) 82%,rgba(10,4,22,.94) 100%)}
+@media (display-mode:standalone){
+  body::after{background:
+    linear-gradient(180deg,#000 0,#000 44px,rgba(8,3,18,.75) 90px,rgba(8,3,18,0) 170px),
+    radial-gradient(64% 38% at 88% -4%, rgba(255,150,190,.12), rgba(255,150,190,0) 70%),
+    linear-gradient(180deg,rgba(30,12,52,0) 0%,rgba(28,11,48,.06) 42%,rgba(22,9,42,.48) 64%,rgba(15,6,30,.84) 82%,rgba(10,4,22,.94) 100%)}
+}
+.ios-standalone body::after{background:
+  linear-gradient(180deg,#000 0,#000 44px,rgba(8,3,18,.75) 90px,rgba(8,3,18,0) 170px),
+  radial-gradient(64% 38% at 88% -4%, rgba(255,150,190,.12), rgba(255,150,190,0) 70%),
+  linear-gradient(180deg,rgba(30,12,52,0) 0%,rgba(28,11,48,.06) 42%,rgba(22,9,42,.48) 64%,rgba(15,6,30,.84) 82%,rgba(10,4,22,.94) 100%)}
+:root{
+  --bg:#160f2b;--surface:rgba(54,30,92,.62);--surface2:rgba(80,46,128,.60);
+  --line:rgba(255,170,215,.18);--txt:#fff2f9;--mut:#dab6e2;
+  --acc:#f9a8d4;--acc-soft:rgba(249,168,212,.16);
+}
+.card,.tile,.add-box,.empty,.login-card,.ag-ev{border:1px solid rgba(255,175,220,.20);box-shadow:0 10px 30px rgba(12,3,28,.38),inset 0 1px 0 rgba(255,210,235,.10)}
+.hgrad{background:linear-gradient(90deg,#f9a8d4,#c88aff);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.tile-ic.t-blue{background:linear-gradient(135deg,rgba(125,211,252,.40),rgba(129,140,248,.26));color:#bae6fd}
+.tile-ic.t-violet{background:linear-gradient(135deg,rgba(192,132,252,.40),rgba(244,114,182,.26));color:#e9d5ff}
+.tile-ic.t-amber{background:linear-gradient(135deg,rgba(253,186,116,.38),rgba(249,168,212,.24));color:#fed7aa}
+.btn.primary{background:linear-gradient(135deg,#8b5cf6,#f472b6);box-shadow:0 10px 26px -8px rgba(244,114,182,.55)}
+@media (min-width:960px){
+  .cta-row .btn.primary{background:linear-gradient(135deg,#8b5cf6,#f472b6);box-shadow:0 10px 26px -8px rgba(244,114,182,.55)}
+  .hoy-left .hero{background:linear-gradient(160deg,rgba(139,92,246,.74),rgba(236,72,153,.56)),url('fondo-fuji.svg?v=1') 92% 80%/330% no-repeat,linear-gradient(135deg,#8b5cf6,#f472b6)}
+}
+
+/* ---- v59 (22-nov-2026): graficas decorativas pulidas (glow anillo), sin hueco entre agenda y progreso en escritorio ---- */
+.ring-wrap svg{filter:drop-shadow(0 0 12px rgba(249,168,212,.35))}
+@media (min-width:960px){
+  .hoy-fill .hoy-cols{gap:0}
+  .hoy-fill .ag-panel{border-radius:var(--rad) 0 0 var(--rad);border-right:none}
+  .hoy-fill .prog-card{border-radius:0 var(--rad) var(--rad) 0}
+}
+
+/* ---- v60 (22-nov-2026): agenda llena toda su columna en escritorio (quita max-width heredado) ---- */
+@media (min-width:960px){
+  .hoy-fill .ag-panel{max-width:none}
+}
+
+/* ---- v61 (22-nov-2026): fecha a ancho completo (agenda y progreso alineados arriba), tiles iPhone sin overflow, link progreso sin estilo boton ---- */
+.tile-main .grow{min-width:0}
+.hoy-row .tile{min-width:0}
+.prog-card .link{background:none!important;border:none!important;box-shadow:none!important;color:var(--acc);padding:0;font-size:13px;font-weight:600}
+@media (max-width:959px){
+  .hoy-row .tile .spark{width:52px;height:auto;flex:none}
+}
+@media (min-width:960px){
+  .hoy-fill .hoy-cols{margin-top:0}
+}
+
+/* ---- v62 (22-nov-2026): tarjeta Progreso general a todo el ancho en movil (las barras respiran) ---- */
+@media (max-width:959px){
+  .hoy-row .tile:nth-child(3){grid-column:1/-1}
+  .hoy-row .tile:nth-child(3) .spark{width:84px;height:auto}
+}
+
+/* ---- v63 (22-nov-2026): sin animacion de entrada al cambiar de seccion; todo aparece siempre en su opacidad final (peticion: nada borroso/translucido unos instantes) ---- */
+.rise{animation:none!important;opacity:1!important;transform:none!important}
+
+/* ---- v64 (22-nov-2026): fondo Your Name 8K (3840w webp), paleta noche-cometa derivada de la imagen ---- */
+body::before{background:url('fondo-sala.webp?v=2') center 25%/cover no-repeat}
+body::after{background:
+  radial-gradient(52% 40% at 88% -4%, rgba(125,211,252,.10), rgba(125,211,252,0) 70%),
+  linear-gradient(180deg,rgba(8,12,34,0) 0%,rgba(8,12,34,.05) 42%,rgba(7,10,30,.46) 64%,rgba(5,8,24,.84) 82%,rgba(4,6,20,.94) 100%)}
+@media (display-mode:standalone){
+  body::after{background:
+    linear-gradient(180deg,#000 0,#000 44px,rgba(4,6,18,.75) 90px,rgba(4,6,18,0) 170px),
+    radial-gradient(64% 38% at 88% -4%, rgba(125,211,252,.09), rgba(125,211,252,0) 70%),
+    linear-gradient(180deg,rgba(8,12,34,0) 0%,rgba(8,12,34,.05) 42%,rgba(7,10,30,.46) 64%,rgba(5,8,24,.84) 82%,rgba(4,6,20,.94) 100%)}
+}
+.ios-standalone body::after{background:
+  linear-gradient(180deg,#000 0,#000 44px,rgba(4,6,18,.75) 90px,rgba(4,6,18,0) 170px),
+  radial-gradient(64% 38% at 88% -4%, rgba(125,211,252,.09), rgba(125,211,252,0) 70%),
+  linear-gradient(180deg,rgba(8,12,34,0) 0%,rgba(8,12,34,.05) 42%,rgba(7,10,30,.46) 64%,rgba(5,8,24,.84) 82%,rgba(4,6,20,.94) 100%)}
+:root{
+  --bg:#0b1030;--surface:rgba(16,24,56,.62);--surface2:rgba(28,38,80,.60);
+  --line:rgba(140,180,255,.18);--txt:#eef4ff;--mut:#a8b8e0;
+  --acc:#9ddcff;--acc-soft:rgba(125,211,252,.16);
+}
+.card,.tile,.add-box,.empty,.login-card,.ag-ev{border:1px solid rgba(150,190,255,.20);box-shadow:0 10px 30px rgba(3,5,20,.42),inset 0 1px 0 rgba(200,225,255,.10)}
+.btn.primary{background:linear-gradient(135deg,#38bdf8,#a855f7);box-shadow:0 10px 26px -8px rgba(125,211,252,.5)}
+@media (min-width:960px){
+  .cta-row .btn.primary{background:linear-gradient(135deg,#38bdf8,#a855f7);box-shadow:0 10px 26px -8px rgba(125,211,252,.5)}
+  .hoy-left .hero{background:linear-gradient(160deg,rgba(56,189,248,.62),rgba(168,85,247,.58)),url('fondo-fuji.svg?v=1') 92% 80%/330% no-repeat,linear-gradient(135deg,#38bdf8,#a855f7)}
+}
+
+/* ---- v65 (22-nov-2026): marca MiSala del sidebar centrada (icono+texto como grupo), logo M en la pantalla de entrada ---- */
+@media (min-width:960px){
+  .tabbar::before{
+    content:'MiSala';font-size:21px;font-weight:800;letter-spacing:-.02em;color:var(--txt);line-height:36px;
+    display:block;width:fit-content;max-width:100%;margin:0 auto 20px;padding:0 0 0 46px;min-height:36px;
+    background:url("data:image/svg+xml,%3Csvg%20xmlns%3D'http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg'%20viewBox%3D'0%200%2064%2064'%3E%3Cdefs%3E%3ClinearGradient%20id%3D'lg'%20x1%3D'0'%20y1%3D'0'%20x2%3D'1'%20y2%3D'1'%3E%3Cstop%20offset%3D'0'%20stop-color%3D'%2338bdf8'/%3E%3Cstop%20offset%3D'.5'%20stop-color%3D'%232563eb'/%3E%3Cstop%20offset%3D'1'%20stop-color%3D'%238b5cf6'/%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Crect%20width%3D'64'%20height%3D'64'%20rx%3D'18'%20fill%3D'url(%23lg)'/%3E%3Cpath%20d%3D'M23%2045V21.5L32%2032l9-10.5V45'%20fill%3D'none'%20stroke%3D'white'%20stroke-width%3D'4'%20stroke-linecap%3D'round'%20stroke-linejoin%3D'round'/%3E%3C%2Fsvg%3E") left center/36px no-repeat;
+  }
+}
+.logo-mark{background:linear-gradient(135deg,#38bdf8,#2563eb 55%,#8b5cf6)}
+
+/* ---- v66 (22-nov-2026): aviso "sin conexion" y boton Actualizar desactivado offline ---- */
+#offline-bar{display:none;position:fixed;top:calc(8px + env(safe-area-inset-top,0px));left:50%;transform:translateX(-50%);z-index:80;background:rgba(14,18,40,.94);border:1px solid rgba(150,190,255,.28);color:#ffd9a8;font-size:12.5px;font-weight:600;padding:7px 14px;border-radius:999px;white-space:nowrap;box-shadow:0 8px 24px rgba(3,5,20,.5)}
+body.offline #offline-bar{display:block}
+#btn-refresh:disabled{opacity:.4;cursor:default}
+
+/* ---- v67 (22-nov-2026): tarjeta de test en verde cuando el banco esta completo (todas vistas y dominadas), mismo verde que la agenda ---- */
+.card.test-done{background:linear-gradient(100deg,#10b981bf,#34d39938 68%,#34d39914);border-color:#34d39973}
+.card.test-done b{color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.3)}
+.card.test-done .meta{color:rgba(255,255,255,.85)}
+.card.test-done svg{color:rgba(255,255,255,.85)}
+
+/* v68: aviso de descarga para uso sin conexion */
+#dl-toast{position:fixed;bottom:calc(92px + env(safe-area-inset-bottom,0px));left:50%;transform:translate(-50%,16px);z-index:90;background:rgba(14,18,40,.96);border:1px solid rgba(150,190,255,.3);color:#dfe8ff;font-size:12.5px;font-weight:600;padding:9px 16px;border-radius:999px;white-space:nowrap;box-shadow:0 10px 28px rgba(3,5,20,.55);opacity:0;pointer-events:none;transition:opacity .25s,transform .25s}
+#dl-toast.show{opacity:1;transform:translate(-50%,0)}
+#dl-toast.ok{border-color:rgba(52,211,153,.55);color:#b9f6dd}
+@media (min-width:900px){#dl-toast{bottom:28px}}
+
+/* v69: las tarjetas verdes de test completado mantienen el verde al pasar el cursor (un pelin mas apagado) */
+.card.clickable.test-done:hover{background:linear-gradient(100deg,#0da271bf,#2bb88438 68%,#2bb88414);border-color:#34d39999}
+
+/* v70: tarjeta dorada cuando el test tiene un intento perfecto (100/100 en un test completo) */
+.card.test-perfect{background:linear-gradient(100deg,#eab308bf,#facc1538 68%,#facc1514);border-color:#facc1573}
+.card.test-perfect b{color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.3)}
+.card.test-perfect .meta{color:rgba(255,255,255,.85)}
+.card.test-perfect svg{color:rgba(255,255,255,.85)}
+.card.clickable.test-perfect:hover{background:linear-gradient(100deg,#ca9a06bf,#e3b91238 68%,#e3b91214);border-color:#facc1599}
+
+/* v71: widgets de musica — etiqueta bajo la cifra y 4 columnas en escritorio */
+.mz-unit{font-size:13px;font-weight:600;color:var(--mut);margin-top:2px}
+@media (min-width:900px){.tiles.mz-widgets{grid-template-columns:repeat(4,1fr)}}
+
+/* ---- PLANTILLA BASE: fondo neutro por degradado. Para usar tu propio fondo:
+   sube tu imagen como fondo-sala.webp y cambia esta regla por:
+   body::before{background:url('fondo-sala.webp?v=1') center 25%/cover no-repeat} ---- */
+body::before{background:radial-gradient(1200px 700px at 70% -10%,#1b2b5e 0%,rgba(27,43,94,0) 60%),linear-gradient(180deg,#0b1230 0%,#0a0f26 55%,#070b1d 100%)}
+
+/* PLANTILLA BASE: hero de escritorio sin imagen externa (el fondo-fuji.svg no va incluido) */
+@media (min-width:960px){
+  .hoy-left .hero{background:linear-gradient(160deg,rgba(56,189,248,.62),rgba(168,85,247,.58)),linear-gradient(135deg,#38bdf8,#a855f7)}
+}
+
+/* ---- Widgets: icono grande en marca de agua asomando por la esquina inferior derecha
+   (estilo あ del hero "Tu próxima actividad"), recortado y con fundido suave hacia la tarjeta ---- */
+.tile{position:relative;overflow:hidden}
+.tile .tile-main,.tile .bar{position:relative;z-index:1}
+.tile>.lab,.tile>.big,.tile>.mz-unit,.tile>.mut{position:relative;z-index:1}
+.tile .wm{position:absolute;right:-16px;bottom:-22px;width:104px;height:104px;opacity:.22;pointer-events:none;user-select:none;z-index:0;-webkit-mask-image:linear-gradient(135deg,transparent 0%,rgba(0,0,0,.55) 32%,#000 58%);mask-image:linear-gradient(135deg,transparent 0%,rgba(0,0,0,.55) 32%,#000 58%)}
+.tile .wm svg{width:100%;height:100%;display:block;stroke-width:2}
+.tile .wm.wm-txt{display:flex;align-items:flex-end;justify-content:flex-end;font-size:92px;font-weight:700;line-height:1;font-family:'Hiragino Sans','Yu Gothic',sans-serif}
+.tile .wm.wm-amber{color:#fdba74}
+.tile .wm.wm-violet{color:#c4b5fd}
+.tile .wm.wm-blue{color:#7dd3fc}
+@media (max-width:640px){
+  .tile .wm{width:82px;height:82px;right:-12px;bottom:-16px}
+  .tile .wm.wm-txt{font-size:72px}
+}
+
+/* ---- Tabbar móvil: solo iconos (etiqueta oculta), repartidos y centrados; en escritorio, etiqueta visible ---- */
+.tabbar button{padding:9px 2px;gap:0;justify-content:center}
+.tabbar .tab-lab{display:none}
+@media (min-width:960px){.tabbar button{gap:12px}.tabbar .tab-lab{display:inline}}
