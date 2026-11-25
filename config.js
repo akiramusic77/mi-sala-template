@@ -6,6 +6,7 @@ window.SALA_CONFIG = {
   "tu-correo@ejemplo.com"
  ],
  "OWNER_NAME": "",
+ "LANG_NAME": "francés",
  "HIDDEN_TABS": [],
  "EXAM": null,
  "MODULE_ORDER": [],

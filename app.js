@@ -213,13 +213,14 @@ function checkNotifsDia() {
       const dueT = cache.testStates.filter(isDue).length;
       if (dueT > 0) seiNotifyOnce('test', 'Tu repaso de tests te espera', `${dueT} pregunta${dueT===1?'':'s'} tocan hoy. Un ratito y listo.`, 'sala-test');
     }
-    /* Japonés sin hacer hoy: aviso a partir de las 18:00. */
+    /* Idioma del día sin hacer: aviso a partir de las 18:00.
+       El nombre del idioma sale de config.js (LANG_NAME). */
     if (hora >= 18) {
       const hoy = dayStr();
       const hist = (cache.jp && Array.isArray(cache.jp.history)) ? cache.jp.history : [];
-      const jpDone = hist.some(h => h.kind === 'lesson' && typeof h.at === 'string' && h.at.slice(0,10) === hoy);
-      const dueK = Object.values(kanaStats).filter(isDue).length;
-      if (!jpDone) seiNotifyOnce('jp', 'Tu japonés de hoy te espera', dueK ? `Lección del día y ${dueK} kana por repasar. Unos 10 minutos.` : 'Unos 10 minutos y racha a salvo.', 'sala-jp');
+      const done = hist.some(h => h.kind === 'lesson' && typeof h.at === 'string' && h.at.slice(0,10) === hoy);
+      const lang = CFG.LANG_NAME || 'idioma';
+      if (!done) seiNotifyOnce('idioma', `Tu ${lang} de hoy te espera`, 'Unos 10 minutos y racha a salvo.', 'sala-idioma');
     }
   } catch(_) {}
 }
@@ -1871,7 +1872,7 @@ function vCuenta() {
 
   <div class="sec rise" style="animation-delay:.1s"><h2>Info</h2></div>
   <div class="card rise" style="animation-delay:.12s">
-    <div class="row"><b class="grow" style="font-size:14px">Mi Sala</b><span class="pill acc">V1.6.0</span></div>
+    <div class="row"><b class="grow" style="font-size:14px">Mi Sala</b><span class="pill acc">V1.6.1</span></div>
     <div class="mut small" style="margin-top:6px">Tus peticiones e imágenes son privadas: las ves tú y el asistente que tú autorices, y solo se usan para personalizar tu Sala.</div>
   </div>`;
 }

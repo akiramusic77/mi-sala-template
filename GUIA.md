@@ -80,7 +80,7 @@ El resto puedes dejarlo como está.
   Y registra el banco en `config.js → TEST_BANKS`:
   `{ "bank": "Mi Asignatura U01", "subject": "Mi Asignatura" }`
 - **Google Calendar**: la agenda funciona con tus tareas sin conectar nada. La sincronización con Google Calendar necesita una función RPC propia y un Client ID de Google Cloud; no va incluida en la plantilla.
-- **Notificaciones push**: van incluidas, solo hay que activarlas (pasos abajo). La app avisa de tus exámenes (a 30, 14 y 7 días), del repaso de tests que toca (desde las 19:00) y de tu japonés del día (desde las 18:00), cada aviso una sola vez al día. En iPhone hay que tener la app instalada en pantalla de inicio y abrirla desde el icono.
+- **Notificaciones push**: van incluidas, solo hay que activarlas (pasos abajo). La app avisa de tus exámenes (a 30, 14 y 7 días), del repaso de tests que toca (desde las 19:00) y de tu idioma del día (desde las 18:00; el nombre sale de `config.js → LANG_NAME`, por defecto francés), cada aviso una sola vez al día. En iPhone hay que tener la app instalada en pantalla de inicio y abrirla desde el icono.
 
 ## Notificaciones push — puesta en marcha
 

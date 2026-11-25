@@ -1,12 +1,12 @@
 /* Mi Sala — service worker v2: notificaciones push + modo sin conexión.
    Cachea la app (shell), el fondo y las lecturas de datos (REST) para consulta offline.
    Nunca cachea /auth/ ni /storage/ (credenciales y URLs firmadas), ni escrituras. */
-const SHELL = 'sala-shell-v3';
+const SHELL = 'sala-shell-v4';
 const DATA = 'sala-data-v2';
 /* Mantener estas versiones en sincronía con index.html al desplegar. */
 const SHELL_URLS = [
   './', 'index.html',
-  'app.css?v=75', 'app.js?v=1248', 'config.js?v=25', 'kana-strokes.js?v=120',
+  'app.css?v=75', 'app.js?v=1249', 'config.js?v=26', 'kana-strokes.js?v=120',
   'jp-content.js', 'japanese.js?v=2', 'music.js?v=5', 'comida.js?v=5', 'deporte.js?v=5', 'dinero.js?v=5',
   'logo.svg',
   'icon-192.png?v=3', 'icon-512.png?v=3', 'icon-maskable-512.png?v=3', 'apple-touch-icon.png?v=3',
