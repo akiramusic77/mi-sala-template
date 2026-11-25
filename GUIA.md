@@ -80,7 +80,21 @@ El resto puedes dejarlo como está.
   Y registra el banco en `config.js → TEST_BANKS`:
   `{ "bank": "Mi Asignatura U01", "subject": "Mi Asignatura" }`
 - **Google Calendar**: la agenda funciona con tus tareas sin conectar nada. La sincronización con Google Calendar necesita una función RPC propia y un Client ID de Google Cloud; no va incluida en la plantilla.
-- **Notificaciones push**: necesitan claves VAPID y una Edge Function (`push-send`); tampoco van incluidas. El botón de Configuración avisará de que no están configuradas.
+- **Notificaciones push**: van incluidas, solo hay que activarlas (pasos abajo). La app avisa de tus exámenes (a 30, 14 y 7 días), del repaso de tests que toca (desde las 19:00) y de tu japonés del día (desde las 18:00), cada aviso una sola vez al día. En iPhone hay que tener la app instalada en pantalla de inicio y abrirla desde el icono.
+
+## Notificaciones push — puesta en marcha
+
+1. **Claves VAPID** (una vez, en tu ordenador): `npx web-push generate-vapid-keys`.
+   - La clave **pública** va en `config.js → VAPID_PUBLIC` (entre comillas).
+   - La **privada** no va en el código: va en los secrets del paso 3.
+2. **Sube la función** `push-send` (viene en `supabase/functions/push-send`):
+   - Instala la CLI de Supabase y, en la carpeta del proyecto:
+     `supabase functions deploy push-send --project-ref TU-PROYECTO`
+3. **Secrets de la función**:
+   `supabase secrets set VAPID_PUBLIC_KEY=... VAPID_PRIVATE_KEY=... VAPID_SUBJECT=mailto:tu-correo@ejemplo.com PUSH_TOKEN=inventa-una-cadena-larga --project-ref TU-PROYECTO`
+   El `PUSH_TOKEN` es una contraseña inventada por ti para que solo tus avisos programados puedan disparar envíos.
+4. **Activa en la app**: entra en Configuración → Notificaciones → "Activar notificaciones" y luego "Probar". Te tiene que llegar la prueba en unos segundos.
+5. **Avisos con horario (opcional)**: el archivo `avisos.sql` crea un aviso diario de ejemplo a las 9:00 (hora de España, aguanta el cambio de horario). Pégalo en el SQL Editor de tu Supabase con tus 3 valores sustituidos y ejecútalo una vez. Duplica el bloque para más avisos.
 
 ## Problemas comunes
 

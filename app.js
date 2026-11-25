@@ -177,6 +177,53 @@ const examInfo = (cfg = CFG.EXAM) => {
   const dias = fecha ? Math.ceil((fecha - new Date())/86400000) : null;
   return { fecha, dias };
 };
+/* ---- Avisos inteligentes de la Sala (cliente) ----
+   Se comprueban al abrir la app, cada uno una vez al día, y solo si el
+   permiso de notificaciones está concedido. Todo se decide con los datos
+   ya cargados; no se envía nada fuera. */
+function seiNotify(title, body, tag) {
+  try {
+    if (!('Notification' in window) || Notification.permission !== 'granted') return;
+    const p = navigator.serviceWorker && navigator.serviceWorker.ready;
+    if (p && p.then) p.then(r => r.showNotification(title, { body, icon:'icon-192.png', badge:'icon-192.png', tag: tag || 'sala', data:{ url:'./' } }));
+    else new Notification(title, { body, icon:'icon-192.png', tag: tag || 'sala' });
+  } catch(_) {}
+}
+function seiNotifyOnce(key, title, body, tag) {
+  const k = 'sala_n_' + key + ':' + dayStr();
+  try { if (localStorage.getItem(k)) return; localStorage.setItem(k, '1'); } catch(_) {}
+  seiNotify(title, body, tag);
+}
+function checkNotifsDia() {
+  try {
+    if (!('Notification' in window) || Notification.permission !== 'granted') return;
+    /* Exámenes: aviso a 30, 14 y 7 días (usa EXAM y EXAM2 de config.js). */
+    [CFG.EXAM, CFG.EXAM2].forEach((cfg, i) => {
+      if (!cfg) return;
+      const ex = examInfo(cfg);
+      if (ex.dias === null || ex.dias < 0) return;
+      const nom = cfg.title || 'tu examen';
+      [30, 14, 7].forEach(d => {
+        if (ex.dias === d) seiNotifyOnce(`exam${d}_${i}`, `Quedan ${d} días para ${nom}`, 'Entra hoy: un poco cada día suma.', 'sala-exam');
+      });
+    });
+    const hora = new Date().getHours();
+    /* Repaso de tests pendiente: aviso a partir de las 19:00. */
+    if (hora >= 19) {
+      const dueT = cache.testStates.filter(isDue).length;
+      if (dueT > 0) seiNotifyOnce('test', 'Tu repaso de tests te espera', `${dueT} pregunta${dueT===1?'':'s'} tocan hoy. Un ratito y listo.`, 'sala-test');
+    }
+    /* Japonés sin hacer hoy: aviso a partir de las 18:00. */
+    if (hora >= 18) {
+      const hoy = dayStr();
+      const hist = (cache.jp && Array.isArray(cache.jp.history)) ? cache.jp.history : [];
+      const jpDone = hist.some(h => h.kind === 'lesson' && typeof h.at === 'string' && h.at.slice(0,10) === hoy);
+      const dueK = Object.values(kanaStats).filter(isDue).length;
+      if (!jpDone) seiNotifyOnce('jp', 'Tu japonés de hoy te espera', dueK ? `Lección del día y ${dueK} kana por repasar. Unos 10 minutos.` : 'Unos 10 minutos y racha a salvo.', 'sala-jp');
+    }
+  } catch(_) {}
+}
+
 const langProgress = () => {
   const total = cache.lessons.length;
   const hechas = cache.lessons.filter(l => cache.results.some(r => r.lesson_id===l.id)).length;
@@ -1824,7 +1871,7 @@ function vCuenta() {
 
   <div class="sec rise" style="animation-delay:.1s"><h2>Info</h2></div>
   <div class="card rise" style="animation-delay:.12s">
-    <div class="row"><b class="grow" style="font-size:14px">Mi Sala</b><span class="pill acc">V1.5.0</span></div>
+    <div class="row"><b class="grow" style="font-size:14px">Mi Sala</b><span class="pill acc">V1.6.0</span></div>
     <div class="mut small" style="margin-top:6px">Tus peticiones e imágenes son privadas: las ves tú y el asistente que tú autorices, y solo se usan para personalizar tu Sala.</div>
   </div>`;
 }
@@ -2334,7 +2381,7 @@ function enterOfflineSession() {
   const u = loadOfflineUser();
   if (!u) { renderLogin(); return; }
   session = { user: { id: u.id, email: u.email }, _offline: true };
-  (async () => { try { await loadAll(); } catch(e) {} tab = 'hoy'; render(); updateOfflineBar(); })();
+  (async () => { try { await loadAll(); } catch(e) {} tab = 'hoy'; render(); updateOfflineBar(); checkNotifsDia(); })();
 }
 
 /* Estado de conexion: aviso claro sin conexion, boton Actualizar desactivado y resincronizacion al volver la red. */
